@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2021 Worksoft, Inc.
+  ~
+  ~ config.jelly
+  ~
+  ~ @author rrinehart
+  -->
+
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:block>
+        <div style="margin-left: 1em;">
+            <f:entry title="Database alias:" field="database">
+                <f:textbox/>
+            </f:entry>
+            <f:entry title="Project name:" field="project">
+                <f:textbox/>
+            </f:entry>
+            <f:entry title="Results folder:" field="folder">
+                <f:textbox/>
+            </f:entry>
+            <f:entry title="Request name:" field="requestName">
+                <f:textbox/>
+            </f:entry>
+            <f:entry title="Certify Process List" help="${descriptor.getHelpFile('processes')}">
+                <f:repeatableProperty field="processes" header="Path" minimum="1" default=" "
+                                      add="${%Add Certify Process}"/>
+            </f:entry>
+        </div>
+    </f:block>
+</j:jelly>

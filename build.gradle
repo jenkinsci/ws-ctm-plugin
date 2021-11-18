@@ -1,0 +1,120 @@
+/*
+ * Copyright (c) 2021 Worksoft, Inc.
+ *
+ * gradle build
+ *
+ * @author rrinehart
+ */
+
+buildscript {
+    // These are the list of remote repositories where Gradle Plugins can be found
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+        // These are Gradle Plugins this build uses.  See also the plugins block below
+        dependencies {
+            classpath 'net.saliman:gradle-properties-plugin:1.5.1'
+        }
+    }
+}
+
+plugins {
+    id 'groovy'
+    id 'org.jenkins-ci.jpi' version '0.43.0'
+    id 'com.github.onslip.gradle-one-jar' version '1.0.5'
+}
+
+apply plugin: 'idea'
+
+// Where to resolve external dependencies.
+repositories {
+    mavenCentral()
+    maven {
+        url('https://repo.jenkins-ci.org/public/')
+    }
+}
+
+group = 'org.jenkins-ci.plugins'
+description = 'Adds build step(s) for interacting with Worksoft Continuous Test Manager.'
+
+project.ext {
+    buildUser = { ->
+        return System.env.USERNAME
+    }
+}
+
+
+apply plugin: 'net.saliman.properties'
+
+jenkinsPlugin {
+    jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
+    displayName = "Worksoft Continuous Test Manager Plugin"
+    shortName = "worksoft-ctm"
+    
+    // URL for plugin on Jenkins wiki or elsewhere
+    url = 'https://github.com/jenkinsci/worksoft-ctm-plugin'
+
+    developers {
+        developer {
+            id = "worksoft"
+            name = "Worksoft, Inc."
+            email = "jenkins-maintainers@worksoft.com"
+        }
+    }
+}
+
+dependencies {
+    api platform("io.jenkins.tools.bom:bom-2.289.x:${jenkinsBomVersion}")
+    implementation 'org.jenkins-ci.plugins:credentials'
+    implementation 'org.jenkins-ci.plugins:structs'
+    implementation 'org.jodd:jodd-http:5.0.1'
+    implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+}
+
+
+idea{
+    module{
+        inheritOutputDirs = false
+        outputDir = compileJava.destinationDir
+        testOutputDir = compileTestJava.destinationDir
+    }
+}
+
+//compileJava {
+//    options.compilerArgs << '-Xlint:deprecation'
+//}
+
+task listSrc(group: 'debugging', description: 'list project source') {
+    doLast { task ->
+        println "Project $task.project.name Source Sets:"
+
+        task.project.sourceSets.each { srcSet ->
+            println " - SourceSet: $srcSet.name"
+            srcSet.allSource.each { file ->
+                println "    - ${file}"
+            }
+        }
+    }
+}
+
+
+task listCompile(group: 'debugging', description: 'show compile configuration') {
+    doLast {
+        configurations.each { conf ->
+            println "Configuration $conf"
+            println "              $conf.allDependencies"
+        }
+    }
+}
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.named('server').configure {
+    execSpec {
+        debugOptions {
+            port.set(5005)
+            suspend.set(false)
+        }
+    }
+}

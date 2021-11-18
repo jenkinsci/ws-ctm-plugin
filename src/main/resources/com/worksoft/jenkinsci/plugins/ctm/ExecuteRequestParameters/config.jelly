@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2021 Worksoft, Inc.
+  ~
+  ~ config.jelly
+  ~
+  ~ @author rrinehart
+  -->
+
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+
+    <j:set var="doSideBySideKeysAndValues" value="false"/>
+
+    <style>
+        span.header {
+        font-weight:bold;
+        margin-right:5px;
+        width: calc(50% - 5px);
+        float: left;
+        }
+    </style>
+
+    <f:block>
+        <j:if test="${doSideBySideKeysAndValues}">
+            <f:entry>
+                <span class="header">Key</span>
+                <span class="header">Value</span>
+            </f:entry>
+        </j:if>
+        <f:entry>
+            <f:repeatableProperty field="list" header=""/>
+            <div><br/>See list of
+                <a href="${rootURL}/env-vars.html" target="_blank">available Jenkins environment variables
+                </a>
+            </div>
+        </f:entry>
+    </f:block>
+</j:jelly>

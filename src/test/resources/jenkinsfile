@@ -1,0 +1,89 @@
+import com.worksoft.jenkinsci.plugins.em.ExecuteRequestCertifyProcess
+import org.junit.internal.runners.statements.Fail
+
+/*
+ * Copyright (c) 2018 Worksoft, Inc.
+ *
+ * jenkinsfile
+ *
+ * @author rrinehart on Mon, 12 Nov 2018
+ */
+
+pipeline {
+    agent any
+
+    triggers {
+        pollSCM('H/15 * * * *')
+    }
+
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        disableConcurrentBuilds()
+        timeout(time: 3, unit: 'HOURS')
+    }
+
+
+    stages {
+        stage('Build') {
+            steps {
+                echo "---------------------------------- Build Step -------------------------------------------"
+            }
+        }
+        stage('Execute Tests') {
+            steps {
+                echo "---------------------------------- Exec Tests -------------------------------------------"
+
+                // Simple Request request
+               // execMan request: [name: 'WAIT_300-Pass'], requestType: 'request'
+
+                // Simple Bookmark request
+                execMan  bookmark: [folder: 'aFolder', name: 'WAIT_0-PassAndFail'],  requestType: 'bookmark'
+
+                //Simple Process List request
+                execMan processList: [database: 'engDB', folder: 'myResults', processes: [[processPath: 'Project1\\Folder1\\Folder2\\Process1'], [processPath: 'testproject\\testfolder\\testprocess']], project: 'MyCoolProject', requestName: 'emTest'], requestType: 'processList'
+
+                // Request with Alternative EM server (note the credential string given is the Id of the creds in Jenkins)
+                //execMan altEMConfig: [credentials: 'em_auth', url: 'http://foo/server'], request: [name: 'WAIT_300-Pass'], requestType: 'request'
+
+                // Bookmark request with wait config specified
+                execMan bookmark: [folder: 'folder2', name: 'WAIT_0-PassAndFail'], requestType: 'bookmark', waitConfig: [maxRunTime: '600', pollInterval: '10']
+
+                // Request with Parameters
+                execMan request: [name: 'WAIT_0-Pass'], requestType: 'request', execParams: [list: [[key: 'a', value: '456'], [key: 'b', value: '123']]]
+
+                // Request with post execute action
+                execMan bookmark: [folder: 'aFolder', name: 'WAIT_0-PassAndFail'], postExecute: [action: 'BPP Report', params: '123'], requestType: 'bookmark'
+
+                script {
+                    def request = emRequest name: 'WAIT_300-Pass'
+                    def params = execParams list: [[key: 'a', value: '456'], [key: 'b', value: '123']]
+
+                    def processList = [[certifyProcess: 'Project1\\Folder1\\Folder2\\Process1'], [certifyProcess: 'testproject\\testfolder\\testprocess']]
+                }
+            }
+        }
+        stage('Post Results') {
+            steps {
+                bat script: "echo post"
+            }
+        }
+    }
+    post {
+        failure {
+            echo "--- Build FAILURE"
+        }
+
+        always {
+            echo "Pipeline result: ${currentBuild.result}"
+            echo "Pipeline currentResult: ${currentBuild.currentResult}"
+
+        }
+        aborted {
+            echo "--- Build ABORTED"
+        }
+        success {
+            echo "--- Build SUCCESS"
+        }
+    }
+}
