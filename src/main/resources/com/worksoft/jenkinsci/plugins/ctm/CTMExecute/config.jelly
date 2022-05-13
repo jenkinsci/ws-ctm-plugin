@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<!--
+  ~ Copyright (c) 2021 Worksoft, Inc.
+  ~
+  ~ config.jelly
+  ~
+  ~ @author rrinehart
+  -->
+
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <!--
+      ** If 'doAltCTMAsAdvancedButton' is set to false, the RelativePath annotations for 'altCTMConfig'
+      ** in CTMExecute.java and ExecuteBookmark must be set to:
+      **
+      **    @RelativePath("../_.altCTMConfig")
+      **
+      ** When set to true, change them to:
+      **
+      **    @RelativePath("../altCTMConfig")
+      **
+      -->
+    <j:set var="doAltCTMAsAdvancedButton" value="true"/>
+
+    <!--
+      **
+      ** Set the following to true if you want the Alt CTM Config area to be grouped with
+      ** the request. Set to false if you want it grouped with the additional options
+      -->
+    <j:set var="altCTMWithRequest" value="true"/>
+
+    <f:block>
+        <h4>${%Request}</h4>
+        <h5>Select the CTM Suite to run.</h5>
+        <div style="margin-left: 1em;">
+            <table width="100%">
+                <f:radioBlock name="requestType" title="CTM Suite" value="request"
+                              help="${descriptor.getHelpFile('request')}" inline="true"
+                              checked="${instance.emRequestTypeEquals('request')}">
+                    <!--f:entry>
+                        <f:property field="executeTenant"/>
+                    </f:entry-->
+                        <f:entry>
+                            <f:property field="request"/>
+                        </f:entry>
+                </f:radioBlock>
+                <j:if test="${altEMWithRequest}">
+                    <j:if test="${!doAltEMAsAdvancedButton}">
+                        <f:entry/><!-- Give a little separation -->
+                        <f:optionalProperty field="altCTMConfig"
+                                            title="Alternative Continuous Testing Manager Configuration"/>
+                    </j:if>
+                    <j:if test="${doAltEMAsAdvancedButton}">
+                        <f:advanced title="Alternative Continuous Testing Manager">
+                            <f:property field="altCTMConfig"/>
+                        </f:advanced>
+                    </j:if>
+                </j:if>
+            </table>
+        </div>
+    </f:block>
+
+    <f:block>
+        <h4>${%Additional Options}</h4>
+        <div style="margin-left: 1em;">
+            <table width="100%">
+                <j:if test="${!altEMWithRequest}">
+                    <j:if test="${!doAltEMAsAdvancedButton}">
+                        <f:optionalProperty field="altCTMConfig" title="Alternative Continuous Testing Manager"/>
+                    </j:if>
+                </j:if>
+
+                <!--f:optionalProperty field="postExecute" title="Post Execute Action"></f:optionalProperty-->
+                <f:optionalProperty field="waitConfig" title="Wait Configuration"/>
+
+                <j:if test="${!altEMWithRequest}">
+                    <j:if test="${doAltEMAsAdvancedButton}">
+                        <f:advanced title="Alternative CTM">
+                            <f:property field="altCTMConfig"/>
+                        </f:advanced>
+                    </j:if>
+                </j:if>
+            </table>
+        </div>
+    </f:block>
+</j:jelly>
