@@ -44,9 +44,11 @@ public class CTMConfig extends GlobalConfiguration {
       return FormValidation.ok("Success");
   }
 
+  // when an administrator clicks on save - this is what will persist the url and credentials
   @Override
   public boolean configure (StaplerRequest req, JSONObject json) throws FormException {
-    req.bindJSON(this, json.getJSONObject("execution manager"));
+
+    req.bindJSON(this, json.getJSONObject("ctm"));
     save();
     return true;
   }

@@ -10,11 +10,8 @@
 
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
     <f:block>
-        <f:entry title="Name:" field="name">
+        <f:entry title="Tenant Name:" field="name">
             <f:select/>
-        </f:entry>
-        <f:entry title="Results folder:" field="folder">
-            <f:textbox/>
         </f:entry>
     </f:block>
 </j:jelly>
