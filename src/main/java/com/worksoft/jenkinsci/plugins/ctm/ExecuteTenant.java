@@ -22,13 +22,13 @@ import org.kohsuke.stapler.export.Exported;
 
 import javax.annotation.Nonnull;
 
-public final class ExecuteSuite extends AbstractDescribableImpl<ExecuteSuite> {
+public final class ExecuteTenant extends AbstractDescribableImpl<ExecuteTenant> {
 
   @Exported
   public String name;
 
   @DataBoundConstructor
-  public ExecuteSuite (String name) {
+  public ExecuteTenant (String name) {
     this.name = name;
   }
 
@@ -36,25 +36,25 @@ public final class ExecuteSuite extends AbstractDescribableImpl<ExecuteSuite> {
     return name;
   }
 
-  @Symbol("request")
+  @Symbol("executeTenant")
   @Extension
-  public static class DescriptorImpl extends Descriptor<ExecuteSuite> {
+  public static class DescriptorImpl extends Descriptor<ExecuteTenant> {
     @Nonnull
     public String getDisplayName () {
-      return "Execute Suite";
+      return "Specify Tenant";
     }
 
     public FormValidation doCheckName (@QueryParameter String name) {
-      ListBoxModel listBox = CTMItemCache.getCachedItems("suite");
+      ListBoxModel listBox = CTMItemCache.getCachedItems("executeTenant");
       FormValidation ret = FormValidation.ok();
 
       String msg = name;
       if (msg.startsWith("ERROR")
               || (listBox != null && (msg = listBox.get(0).value).startsWith("ERROR"))
-          ) {
-        ret = FormValidation.error("CTM error retrieving suites - " + msg.replace("ERROR: ", "") + "!");
+      ) {
+        ret = FormValidation.error("CTM error tenants - " + msg.replace("ERROR: ", "") + "!");
       } else if (StringUtils.isEmpty(name)) {
-        ret = FormValidation.error("A CTM Suite must be specified!  (1st step is specifying tenant)");
+        ret = FormValidation.error("A tenant  must be specified!");
       }
 
       return ret;
@@ -62,11 +62,11 @@ public final class ExecuteSuite extends AbstractDescribableImpl<ExecuteSuite> {
 
     // Called whenever emRequestType or alternative CTM config changes
     public ListBoxModel doFillNameItems (@RelativePath("..") @QueryParameter String requestType,
-                                            @RelativePath("..") @QueryParameter String executeTenant,
-                                            @RelativePath("../altCTMConfig") @QueryParameter String url,
-                                            @RelativePath("../altCTMConfig") @QueryParameter String credentials) {
-      System.out.println("\n---------------------------------------\ndofillnameItems for suites.......");
-      return CTMExecute.fillItems("request", executeTenant, url, credentials);
+                                         @RelativePath("../altCTMConfig") @QueryParameter String url,
+                                         @RelativePath("../altCTMConfig") @QueryParameter String credentials) {
+      // if we are able to implement client-side validation then we can uncomment this and other features
+      //return CTMExecute.tenantsForAuthenticatedUser(url, credentials);
+      return null;
     }
   }
 }

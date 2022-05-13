@@ -9,8 +9,7 @@
 package com.worksoft.jenkinsci.plugins.ctm;
 
 import com.worksoft.jenkinsci.plugins.ctm.config.CTMConfig;
-import com.worksoft.jenkinsci.plugins.ctm.model.CTMResult;
-import com.worksoft.jenkinsci.plugins.ctm.model.CTMServer;
+import com.worksoft.jenkinsci.plugins.ctm.model.*;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -24,9 +23,6 @@ import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
 import jenkins.model.GlobalConfiguration;
 import jenkins.tasks.SimpleBuildStep;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONException;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -38,8 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -89,9 +83,8 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
 
   // The following instance variables are those provided by the GUI
   private String requestType;
-  private ExecuteBookmark bookmark;
   private ExecuteSuite request;
-  private ExecuteRequestCertifyProcessList processList;
+  //private ExecuteTenant executeTenant;
   private ExecuteRequestPostExecute postExecute;
   private ExecuteRequestCTMConfig altCTMConfig;
   private ExecuteWaitConfig waitConfig;
@@ -99,6 +92,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
 
   // These instance variables are those used during execution
   private ExecuteRequestCTMConfig ctmConfig; // CTM config used during run
+
   private CTMServer server;
   private Run<?, ?> run;
   private FilePath workspace;
@@ -113,6 +107,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     // When we get here Jenkins is saving our form values, so we can invalidate
     // this session's itemsCache.
     CTMItemCache.invalidateItemsCache();
+    //TenantCache.invalidateTenantsCache();
   }
 
   public boolean getExecParamsEnabled () {
@@ -148,49 +143,37 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
   }
 
   public String getRequestType () {
+    if(requestType == null
+            || StringUtils.isEmpty(requestType)) {
+      // When we get here Jenkins is loading our form values, so we can invalidate
+      // this session's itemsCache.
+      CTMItemCache.invalidateItemsCache();
+    }
+
     return requestType;
   }
 
-  public ExecuteBookmark getBookmark () {
-    // When we get here Jenkins is loading our form values, so we can invalidate
-    // this session's itemsCache.
-    CTMItemCache.invalidateItemsCache();
-
-    return bookmark;
-  }
-
   public ExecuteSuite getRequest () {
-    // When we get here Jenkins is loading our form values, so we can invalidate
-    // this session's itemsCache.
-    CTMItemCache.invalidateItemsCache();
-
     return request;
   }
-
-  public ExecuteRequestCertifyProcessList getProcessList () {
-    return processList;
-  }
-
+  //public ExecuteTenant getExecuteTenant() {
+    //return executeTenant;
+  //}
   @DataBoundSetter
   public void setRequestType (@Nonnull String requestType) {
+    System.out.println("\n----------- databound setter - requestType: " + requestType);
     this.requestType = requestType;
   }
-
-  @DataBoundSetter
-  public void setBookmark (ExecuteBookmark bookmark) {
-    this.bookmark = bookmark;
-  }
-
   @DataBoundSetter
   public void setRequest (ExecuteSuite request) {
+    System.out.println("\n----------- databound setter - suite: " + request.getName());
     this.request = request;
   }
-
-  @DataBoundSetter
-  public void setProcessList (ExecuteRequestCertifyProcessList processList) {
-    this.processList = processList;
-  }
-
+/*  @DataBoundSetter
+  public void setExecuteTenant (ExecuteTenant executeTenant) {
+    System.out.println("\n----------- databound setter - executeTenant: " + executeTenant.getName());
+    this.executeTenant = executeTenant;
+  }*/
   @DataBoundSetter
   public void setPostExecute (ExecuteRequestPostExecute postExecute) {
     this.postExecute = postExecute;
@@ -221,6 +204,12 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
   public String emRequestTypeEquals (String given) {
     return String.valueOf((requestType != null) && (requestType.equals(given)));
   }
+/*  public boolean tenantSet() {
+    boolean result =  executeTenant != null
+            && !StringUtils.isEmpty(executeTenant.name);
+    System.out.println("tenantSet ----- " + result);
+    return result;
+  }*/
 
   @Symbol("execMan")
   @Extension
@@ -234,71 +223,163 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     @Override
     @Nonnull
     public String getDisplayName () {
-      return "Run Execution Manager Request";
+      return "Run Continuous Testing Manager Suite";
     }
   }
 
-  // Used by doFillRequestItems and doFillBookmarkItems (See ExecuteRequestBookmark class)
-  public static ListBoxModel fillItems (String emRequestType, String url, String credentials) {
-    ListBoxModel items = new ListBoxModel();
-
-    // Pick the right EM configuration
+  private static ExecuteRequestCTMConfig Configuration(String portalUrl, String credentials) {
     CTMConfig globalConfig = GlobalConfiguration.all().get(CTMConfig.class);
     ExecuteRequestCTMConfig emConfig = globalConfig != null ? globalConfig.getCTMConfig() : null;
-    ExecuteRequestCTMConfig altEMConfig = new ExecuteRequestCTMConfig(url, credentials);
-    if (altEMConfig != null && altEMConfig.isValid()) {
-      emConfig = altEMConfig;
+    ExecuteRequestCTMConfig altCTMConfig = new ExecuteRequestCTMConfig(portalUrl, credentials);
+    if (altCTMConfig != null && altCTMConfig.isValid()) {
+      emConfig = altCTMConfig;
     }
-
-    if (emConfig != null) {
-      CTMServer server = new CTMServer(emConfig.getUrl(), emConfig.lookupCredentials());
+    return emConfig;
+  }
+  private static ConfigureAndAuth AuthenticateOnly(ExecuteRequestCTMConfig ctmConfig) {
+    ConfigureAndAuth result = new ConfigureAndAuth();
+    if (ctmConfig != null) {
+      CTMServer server = new CTMServer(ctmConfig.getUrl(), ctmConfig.lookupCredentials());
+      result.Server = server;
       try {
         if (server.login()) {
-          JSONObject retrievedObjs;
-          if (emRequestType.equals("request")) {
-            retrievedObjs = server.requests();
-          } else {
-            retrievedObjs = server.bookmarks();
-          }
-          if (retrievedObjs != null) {
-            try {
-              items.add("-- Select a " + emRequestType + " --"); // Add blank entry first
+          System.out.println("tenantsForAuthenticatedUser - logged in");
+          HashSet<WorksoftTenant> tenants = null;
 
-              // Lookup all the requests defined on the EM and find the one specified
-              // by the user
-              JSONArray objs = retrievedObjs.getJSONArray("objects");
-              for (int i = 0; i < objs.size(); i++) {
-                JSONObject req = objs.getJSONObject(i);
-                String name = req.getString("Name");
-                items.add(name);
-              }
-            } catch (Exception ignored) {
-              // Bad JSON
-              items.add("*** ERROR ***", "ERROR: Bad JSON");
-              items.get(items.size() - 1).selected = true;
-            }
-          } else {
-            // couldn't get requests
-            items.add("*** ERROR ***", "ERROR: Couldn't retrieve " + emRequestType + "s");
-            items.get(items.size() - 1).selected = true;
+          if (server.authenticatedUserInfo()) {
+            System.out.println("authenticatedUserInfo - invoked");
+            tenants = server.Tenants();
+          }
+          if (tenants != null) {
+            result.Tenants = tenants;
+          }
+          else {
+            result.Error = true;
+            result.DisplayErrorMessage = "*** ERROR with tenants ***";
+            result.ErrorMessage = "ERROR: Couldn't retrieve Tenants from authenticated user";
           }
         } else {
-          // Couldn't log in
-          items.add("*** ERROR ***", "ERROR: Couldn't log in");
-          items.get(items.size() - 1).selected = true;
+          // couldn't login
+          result.Error = true;
+          result.DisplayErrorMessage = "*** ERROR during authentication ***";
+          result.ErrorMessage = "ERROR: Couldn't log in";
         }
       } catch (Exception ex) {
-        // Exception while logging in
-        items.add("*** ERROR ***", "ERROR: Exception while logging in");
+        System.out.println("exception: " + ex.getMessage());
+        System.out.println("exception: " + ex.getStackTrace());
+        result.Error = true;
+        result.DisplayErrorMessage = "*** ERROR  *** " + ex.getMessage();
+        result.ErrorMessage = "ERROR: Exception while logging in";
+      }
+    }
+    else {
+      // No CTM configuration
+      result.DisplayErrorMessage = "*** ERROR No CTM Configuration ***";
+      result.ErrorMessage = "ERROR: No CTM configuration";
+      result.Error = true;
+    }
+    return result;
+  }
+  private static ConfigureAndAuth Authenticate(String portalUrl, String credentials) {
+
+    ExecuteRequestCTMConfig ctmConfig = Configuration(portalUrl, credentials);
+    return AuthenticateOnly(ctmConfig);
+
+  }
+/*  public static ListBoxModel tenantsForAuthenticatedUser(String portalUrl, String credentials) {
+    ListBoxModel items = new ListBoxModel();
+
+    ConfigureAndAuth authResult = Authenticate(portalUrl, credentials);
+    if(!authResult.Error) {
+      try {
+        items.add("-- Select a tenant --");
+
+        // Lookup all the Suites defined on the CTM and find the one specified
+        // by the user
+
+        for(WorksoftTenant tenant : authResult.Tenants) {
+          String name = tenant.TenantName;
+          items.add(name);
+        }
+      } catch (Exception ignored) {
+        // Bad JSON
+        items.add("*** ERROR with tenants ***", "ERROR: (tenants) Bad JSON");
         items.get(items.size() - 1).selected = true;
       }
-    } else {
-      // No EM configuration
-      items.add("*** ERROR ***", "ERROR: No EM configuration");
+    }
+    else {
+      items.add(authResult.DisplayErrorMessage, authResult.ErrorMessage);
       items.get(items.size() - 1).selected = true;
     }
 
-    CTMItemCache.updateItemsCache(emRequestType, items);
+    CTMItemCache.updateItemsCache("executeTenant", items);
+
+    return items;
+  }*/
+
+  // Used by doFillRequestItems
+  public static ListBoxModel fillItems (String emRequestType, String executeTenant, String portalUrl, String credentials) {
+    ListBoxModel items = new ListBoxModel();
+
+    System.out.println("\n----------------------------------\nfillItems--------" + executeTenant);
+/*
+    if(emRequestType == null
+      || !emRequestType.equals("request")) {
+      items.add("*** Waiting for user to specify type ***", "ERROR: Waiting for user to specify type");
+      items.get(items.size() - 1).selected = true;
+      return items;
+    }
+    if(executeTenant == null
+      || StringUtils.isEmpty(executeTenant)) {
+      items.add("*** Waiting for Tenant to be specified ***", "ERROR: Waiting for Tenant to be specified");
+      items.get(items.size() - 1).selected = true;
+      return items;
+    }
+*/
+    System.out.println("\n--------------------fillItems ----------------------------\n");
+
+    ConfigureAndAuth authResult = Authenticate(portalUrl, credentials);
+    if(!authResult.Error) {
+      try {
+        //String tenantId = authResult.MatchingTenantId(executeTenant);
+        //String tenantId = authResult.FirstTenant().TenantId;
+        //HashSet<CTMSuite> suitesForTenant = authResult.Server.suites(tenantId);
+
+        List<CTMSuite> suites = authResult.Server.suitesForAllTenants();
+        if (suites != null) {
+          try {
+            items.add("-- Select a CTM Suite --"); // Add blank entry first
+
+            // Lookup all the Suites defined on the CTM and find the one specified
+            // by the user
+            for(CTMSuite suite : suites) {
+              String name = suite.Tenant.TenantName + " / " + suite.SuiteName;
+              items.add(name, name);
+            }
+          } catch (Exception ignored) {
+            // Bad JSON
+            items.add("*** ERROR ***", "ERROR: Bad JSON");
+            items.get(items.size() - 1).selected = true;
+          }
+        } else {
+          // couldn't get requests
+          items.add("*** ERROR ***", "ERROR: Couldn't retrieve Suite(s) from CTM (or none for tenant)");
+          items.get(items.size() - 1).selected = true;
+        }
+
+      }
+      catch(Exception ex) {
+        System.out.println("Error retrieving list of suites - " + ex.getMessage());
+        items.add("*** ERROR ***", "ERROR: Couldn't retrieve Suite(s) from CTM " + ex.getMessage());
+        items.get(items.size() - 1).selected = true;
+      }
+    }
+    else {
+      items.add(authResult.DisplayErrorMessage, authResult.ErrorMessage);
+      items.get(items.size() - 1).selected = true;
+    }
+
+    CTMItemCache.updateItemsCache("request", items);
 
     return items;
   }
@@ -342,7 +423,101 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     return ret;
   }
 
-  private void waitForCompletion (String guid) {
+  private void reportVerboseProcessInformation(ProcessAutomatedExecutionModel[] processes) {
+    if (processes == null
+            || processes.length == 0) return;
+
+    try {
+      // Print the run's status to the build console
+      consoleOut.println("Name  Status                     Log Header ID      Resource                            Last Error");
+      consoleOut.println("----- -------------------------- ------------------ ----------------------------------- -----------------------------------");
+      for (int i = 0; i < processes.length; i++) {
+        ProcessAutomatedExecutionModel p = processes[i];
+
+        String name = p.CertifyProcessName;
+        String executionStatus = p.CertifyResult;
+        String resourceName = p.MachineId;
+        String lastReportedError = p.ErrorMessage;
+        String logHeaderID = p.LogHeaderId;
+
+        consoleOut.println(name + ":");
+        consoleOut.println(String.format("      %-26.26s %-18s %35s %s",
+                StringUtils.abbreviate(executionStatus, 26),
+                StringUtils.abbreviate(logHeaderID, 18),
+                StringUtils.abbreviate(resourceName, 35),
+                lastReportedError));
+      }
+    }
+    catch(Exception ex) {
+      System.out.println(ex.getMessage());
+      System.out.println(ex.getStackTrace());
+    }
+  }
+  private boolean MarkBuildStatusPassed(CTMExecutionResult lastResultInfo) {
+    boolean passed = false;
+    if(lastResultInfo.ErrorMessage != null
+       && StringUtils.isNotEmpty(lastResultInfo.ErrorMessage)) {
+      passed = false;
+      consoleOut.println("Automation Error acknowledged, marking Jenkins build as failed - " + lastResultInfo.ErrorMessage);
+    } else if(StringUtils.isNotEmpty(lastResultInfo.Result)) {
+      String result = lastResultInfo.Result.toUpperCase();
+      if(result.contains("PASS")
+        || result.contains("SUCCESS")) {
+        passed = true;
+      }
+    }
+    else {
+      passed = false; // inconclusive
+      consoleOut.println("Not enough information in CTM response to indicate result information, marking Jenkins build as failed");
+    }
+    return passed;
+  }
+  private void OnExecutionComplete(CTMExecutionResult lastResultInfo, boolean aborted, String automationGuid) {
+    System.out.println("\nOnExecutionComplete - " + automationGuid);
+    if(aborted) {
+      // Tell the CTM to abort execution
+      // TODO: implement this feature
+      //CTMResult result = server.executionAbort(guid);
+      //if (!result.is200() && !aborted) {
+      //        consoleOut.println("\n*** ERROR: Error aborting execution:");
+      //        consoleOut.printlnIndented("*** ERROR:   ", result.dumpDebug());
+      //      }
+    }
+
+    if(lastResultInfo != null) {
+      this.reportVerboseProcessInformation(lastResultInfo.CompletedExecutions);
+      if(!aborted) {
+        if(this.MarkBuildStatusPassed(lastResultInfo)) {
+          run.setResult(Result.SUCCESS);
+        } else {
+          run.setResult(Result.FAILURE);
+        }
+      }
+    } else {
+        run.setResult(Result.FAILURE);
+    }
+
+    // Write the response JSON to a file so that it can be processed further by the Jenkins job
+    try {
+      FilePath resFile = new FilePath(workspace.getChannel(), workspace + "/execMan-result.json");
+      //File resFile = new File(workspace + "/execMan-result.json");
+      if (lastResultInfo != null
+        && StringUtils.isNotEmpty(lastResultInfo.FullResponse)) {
+        resFile.write(lastResultInfo.FullResponse, null);
+        //FileUtils.writeStringToFile(resFile, response.toString());
+        consoleOut.println("\nResults written to " + resFile);
+      }
+    } catch (Exception e) {
+      consoleOut.println("\n*** ERROR: unexpected error while writing results");
+      consoleOut.println("*** ERROR: exception: " + e);
+      consoleOut.println("*** ERROR: exception: " + e.getMessage());
+      consoleOut.println("*** ERROR: stack trace:  ");
+      consoleOut.printlnIndented("*** ERROR:    ", e.getStackTrace());
+    }
+
+
+  }
+  private void waitForCompletion (String guid, ConfigureAndAuth authResult) {
     boolean aborted = false;
     String abortReason = "";
 
@@ -366,71 +541,11 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     elapsedFmt.setTimeZone(TimeZone.getTimeZone("UTC"));
     String elapsedTime = elapsedFmt.format(new Date(currentTime - startTime));
 
-    JSONArray prevTasks = null;
-    JSONObject response = null;
-
     // loop until complete/aborted
     consoleOut.println("Waiting for execution to complete...");
+    CTMExecutionResult lastResultInfo = null;
+    int qtyApiFailures = 5;
     while (true) {
-      CTMResult statusResult = server.executionStatus(guid);
-
-      if (!statusResult.is200()) {
-        consoleOut.println("\n*** ERROR: EM error while checking execution status:");
-        consoleOut.printlnIndented("*** ERROR:   ", statusResult.dumpDebug());
-        break;
-      }
-
-      response = statusResult.getJsonData();
-      try {
-        String jobStatus = response.getString("Status");
-        String jobExecutionStatus = response.getString("ExecutionStatus");
-        consoleOut.println("\nElapsed time=" + elapsedTime + " - " + jobStatus + "," + jobExecutionStatus + (aborted ? " *** ABORTING ***" : ""));
-        if (response.containsKey("Tasks")) { // Check for "Tasks" before proceeding
-          JSONArray tasks = response.getJSONArray("Tasks");
-          if (prevTasks == null || !prevTasks.equals(tasks)) {
-            // Print the run's status to the build console
-            consoleOut.println("Name  Status                     Resource        Last Error");
-            consoleOut.println("----- -------------------------- --------------- -----------------------------------");
-            for (int i = 0; i < tasks.size(); i++) {
-              JSONObject task = tasks.getJSONObject(i);
-              String name = task.getString("Name");
-              String executionStatus = task.getString("ExecutionStatus");
-              String resourceName = task.getString("ResourceName");
-              String lastReportedError = task.getString("LastReportedError");
-              String status = task.getString("Status");
-              if (StringUtils.isNotEmpty(status) && StringUtils.isNotEmpty(executionStatus)) {
-                status += ",";
-              }
-              status += executionStatus;
-
-              consoleOut.println(name + ":");
-              consoleOut.println(String.format("      %-26.26s %-15.15s %s",
-                      StringUtils.abbreviate(status, 26),
-                      StringUtils.abbreviate(resourceName, 15),
-                      lastReportedError));
-
-              prevTasks = tasks;
-            }
-          }
-        }
-
-        // Check for completion
-        if (jobStatus.toUpperCase().equals("COMPLETED")) {
-          if (!aborted && jobExecutionStatus.toUpperCase().equals("FAILED")) {
-            run.setResult(Result.FAILURE);
-          } else if (jobExecutionStatus.toUpperCase().equals("PASSED")) {
-            run.setResult(Result.SUCCESS);
-          }
-          break;
-        }
-      } catch (JSONException e) {
-        // JSON badness
-        consoleOut.println("\n*** ERROR: unexpected error while processing status");
-        consoleOut.println("*** ERROR: exception: " + e);
-        consoleOut.println("*** ERROR: exception: " + e.getMessage());
-        consoleOut.println("*** ERROR: stack trace:  ");
-        consoleOut.printlnIndented("*** ERROR:    ", e.getStackTrace());
-      }
       try {
         Thread.sleep(pollInterval);
         currentTime = System.currentTimeMillis();
@@ -441,74 +556,63 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
             // we're abandoning our wait.
             consoleOut.println("\n*** ERROR: Abort timed out!!! - abandoning...");
             abortReason += " (abandoned!)";
-            break;
           } else {
             consoleOut.println("\n*** ERROR: Execution timed out after " + elapsedTime + " - aborting...");
 
+            aborted = true;
             abortReason = " due to max wait time exceeded";
-
-            CTMResult result = server.executionAbort(guid);
-            if (!result.is200()) {
-              consoleOut.println("\n*** ERROR: EM error aborting execution:");
-              consoleOut.printlnIndented("*** ERROR:   ", result.dumpDebug());
-            }
-
             run.setResult(Result.ABORTED);
+          }
+          break;
+        }
+
+        CTMExecutionResult statusResult = authResult.Server.executionStatus(guid);
+        if (statusResult == null
+                || statusResult.ApiFailed) {
+          qtyApiFailures--;
+          if (qtyApiFailures < 0) {
+            consoleOut.println("\n*** ERROR: CTM error while checking execution status:");
+            consoleOut.printlnIndented("*** ERROR:   ", statusResult.ApiFailure);
+            break;
+          }
+        } else {
+          lastResultInfo = statusResult;
+          consoleOut.println("\nElapsed time=" + elapsedTime + " - " +
+                  statusResult.MetricProgressInfo()
+                  + (aborted ? " *** ABORTING ***" : ""));
+          if (!statusResult.StillExecuting()) {
+            break;
           }
         }
       } catch (InterruptedException e) {
         if (!aborted) {
           consoleOut.println("\n*** ERROR: User requested abort of execution after " + elapsedTime);
 
+          aborted = true;
           abortReason = " due to user request";
 
           run.setResult(Result.ABORTED);
+          break;
         } else {
           // We'll get here if the user tries to abort an aborting execution, so flag it
           // as such and abandon our wait.
           consoleOut.println("\n*** ERROR: User requested abort of execution (again) after " + elapsedTime);
+          aborted = true;
           abortReason += " (forced!)";
           break;
         }
-      }
-      if (run.getResult() == Result.ABORTED) {
-        // Tell the EM to abort execution
-        CTMResult result = server.executionAbort(guid);
-        if (!result.is200() && !aborted) {
-          consoleOut.println("\n*** ERROR: Error aborting execution:");
-          consoleOut.printlnIndented("*** ERROR:   ", result.dumpDebug());
-        }
-        if (!aborted) {
-          // Once we tell the EM to abort we'll wait for up to 120 seconds. We're reducing the
-          // poll interval to give faster feedback to the user.
-          pollInterval = TimeUnit.MILLISECONDS.convert(5L, TimeUnit.SECONDS);
-          aborted = true;
-
-          // Set the max run time to one minute from now in order to wait for EM to complete
-          // the abort.
-          maxRunTime = TimeUnit.MILLISECONDS.convert(120L, TimeUnit.SECONDS);
-          endTime = (currentTime + maxRunTime);
-        }
+      } catch (Exception ex) {
+        consoleOut.println("\n*** ERROR: CTM error :");
+        consoleOut.printlnIndented("*** ERROR:   ", ex.getMessage());
+        break;
       }
     }
-
-    // Write the response JSON to a file so that it can be processed further by the Jenkins job
-    try {
-      FilePath resFile = new FilePath(workspace.getChannel(), workspace + "/execMan-result.json");
-      //File resFile = new File(workspace + "/execMan-result.json");
-      if (response != null) {
-        resFile.write(response.toString(), null);
-        //FileUtils.writeStringToFile(resFile, response.toString());
-        consoleOut.println("\nResults written to " + resFile);
-      }
-    } catch (Exception e) {
-      consoleOut.println("\n*** ERROR: unexpected error while writing results");
-      consoleOut.println("*** ERROR: exception: " + e);
-      consoleOut.println("*** ERROR: exception: " + e.getMessage());
-      consoleOut.println("*** ERROR: stack trace:  ");
-      consoleOut.printlnIndented("*** ERROR:    ", e.getStackTrace());
+    if(lastResultInfo == null
+      && guid != null
+      && StringUtils.isNotEmpty(guid)) {
+      lastResultInfo = authResult.Server.executionStatus(guid);
     }
-
+    this.OnExecutionComplete(lastResultInfo, aborted, guid);
 
     consoleOut.println("\n\nExecution " + run.getResult().toString() + " after - " + elapsedTime + abortReason);
   }
@@ -536,42 +640,25 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
       ctmConfig = getAltCTMConfig();
     }
 
+    ConfigureAndAuth authResult = null;
     String guid = null;
 
     try {
       if (ctmConfig != null && ctmConfig.isValid()) {
-        server = new CTMServer(ctmConfig.getUrl(), ctmConfig.lookupCredentials());
-        if (server.login()) {
-          // Dispatch to one of the methods below
-          try {
-            String methName = "execute_" + requestType.toUpperCase().trim();
-            Method meth = this.getClass().getDeclaredMethod(methName);
-            guid = (String) meth.invoke(this);
-          } catch (NoSuchMethodException ex) {
-            consoleOut.println("\n*** ERROR: Don't know how to execute '" + requestType + "'");
-            run.setResult(Result.FAILURE); // Fail this build step.
-          } catch (IllegalAccessException ex) {
-            consoleOut.println("\n*** ERROR: Couldn't execute '" + requestType + "'");
-            consoleOut.println("*** ERROR: unexpected error while processing request: " + requestType);
-            consoleOut.println("*** ERROR: exception: " + ex);
-            consoleOut.println("*** ERROR: exception: " + ex.getMessage());
-            consoleOut.println("*** ERROR: stack trace:  ");
-            consoleOut.printlnIndented("*** ERROR:   ", ex.getStackTrace());
+        authResult = AuthenticateOnly(ctmConfig);
+        if(authResult.Error) throw new RuntimeException(authResult.ErrorMessage);
 
-            run.setResult(Result.FAILURE); // Fail this build step.
-          } catch (InvocationTargetException ex) {
-            consoleOut.println("*** ERROR: Exception thrown while executing '" + requestType + "'");
-            run.setResult(Result.FAILURE); // Fail this build step.
-          }
-        } else {
+        System.out.println("\n---------------- begin execute suite--------\n");
+        guid = this.execute_REQUEST(authResult);
+/*        } else {
           CTMResult result = server.getLastCTMResult();
           consoleOut.println("\n*** ERROR: Can't log in to '" + ctmConfig.getUrl() + "':");
           consoleOut.printlnIndented("*** ERROR:   ", result.getResponseData());
           run.setResult(Result.FAILURE); // Fail this build step.
-        }
-      } else {
-        consoleOut.println("\n*** ERROR: A valid Execution Manager configuration must be specified!");
-        run.setResult(Result.FAILURE); // Fail this build step.
+        }*/
+      }
+      else {
+        throw new RuntimeException("No CTM configuration within Jenkins");
       }
     } catch (Exception ex) {
       consoleOut.println("\n*** ERROR: Unexpected error while processing request type: " + requestType);
@@ -583,72 +670,113 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
       run.setResult(Result.FAILURE); // Fail this build step.
     }
     if (run.getResult() != Result.FAILURE) {
-      if (guid == null) {
+      if (guid == null
+         || StringUtils.isEmpty(guid)) {
         consoleOut.println("\n*** ERROR: An unexpected error occurred while requesting execution!");
         run.setResult(Result.FAILURE); // Fail this build step.
       } else {
-        waitForCompletion(guid);
+        waitForCompletion(guid, authResult);
       }
     }
   }
 
   // Called via reflection from the dispatcher above to execute a 'request'
-  public String execute_REQUEST () throws InterruptedException, IOException {
+  private WorksoftTenant FirstTenantFromServer(ConfigureAndAuth authResult) {
+    WorksoftTenant firstTenant = null;
+    HashSet<WorksoftTenant> allTenants = authResult.Server.Tenants();
+    if(allTenants == null
+      || allTenants.size() <= 0) throw new RuntimeException("No tenants in cache to identify first");
+      for (WorksoftTenant t : allTenants) {
+        firstTenant = t;
+        break;
+      }
+      return firstTenant;
+  }
+  private WorksoftTenant MatchingTenantFromServer(ConfigureAndAuth authResult, String tenantName) {
+    WorksoftTenant match = null;
+    HashSet<WorksoftTenant> allTenants = authResult.Server.Tenants();
+    if(allTenants == null
+            || allTenants.size() <= 0) throw new RuntimeException("No tenants in cache to identify first");
+    for (WorksoftTenant t : allTenants) {
+      if(t.TenantName.equals(tenantName)) {
+        match = t;
+        break;
+      }
+    }
+    return match;
+  }
+  private String MatchingSuiteIdentifier(String suiteName, String tenantId, ConfigureAndAuth authResult) {
+    String suiteId = "";
+    boolean found = false;
+
+    HashSet<CTMSuite> suitesForTenant = authResult.Server.suites(tenantId);
+    if(suitesForTenant == null) throw new RuntimeException("No response for suites for tenant: " + tenantId);
+    if(suitesForTenant.size() <= 0) throw new RuntimeException("No suites for tenant: " + tenantId);
+    for(CTMSuite suite : suitesForTenant) {
+      if(suite.SuiteName.equals(suiteName)) {
+        suiteId = suite.SuiteId;
+        found = true;
+        break;
+      }
+    }
+    if(!found) throw new RuntimeException("No Suite Named '" + suiteName + "' found for tenant, it may have been renamed.");
+
+    return suiteId;
+  }
+  private TandS TenantAndSuite(String tenantAndSuiteName) {
+    if(!tenantAndSuiteName.contains("/")) throw new RuntimeException("Expected delimiter of '/' for tenant and suite");
+    int i = tenantAndSuiteName.indexOf("/");
+    TandS result = new TandS();
+    result.TenantName = tenantAndSuiteName.substring(0, i).trim();
+    result.SuiteName = tenantAndSuiteName.substring(i + 1).trim();
+    return result;
+  }
+  public String execute_REQUEST (ConfigureAndAuth authResult) throws InterruptedException, IOException {
+    System.out.println("\n-------------------execute_request\n");
     String guid = null;
+    /*
+    if(StringUtils.isEmpty(executeTenant.getName())) {
+      consoleOut.println("\n*** ERROR: A tenant name or ID must be specified!");
+      run.setResult(Result.FAILURE); // Fail this build step.
+    }*/
     if (StringUtils.isEmpty(request.getName())) {
-      consoleOut.println("\n*** ERROR: A request name or ID must be specified!");
+      consoleOut.println("\n*** ERROR: A CTM suite name or ID must be specified!");
       run.setResult(Result.FAILURE); // Fail this build step.
     } else {
-      String reqID = null;
-      String theReq = request.getName().trim();
-      JSONObject reqs;
+      //String tenantName = executeTenant.getName().trim();
+      //String suiteName = request.getName().trim();
 
-      if ((reqs = server.requests()) != null) {
-        try {
-          // Lookup all the requests defined on the EM and find the one specified
-          // by the user
-          JSONArray objs = reqs.getJSONArray("objects");
-          for (int i = 0; i < objs.size(); i++) {
-            JSONObject req;
-            if ((req = objs.getJSONObject(i)).getString("Name").equals(theReq) ||
-                    req.getString("RequestID").equals(theReq)) {
-              reqID = req.getString("RequestID");
-              break;
-            }
-          }
-        } catch (Exception ex) {
-          consoleOut.println("\n*** ERROR: unexpected error during execute_REQUEST:");
-          consoleOut.println("*** ERROR: unexpected error while processing request: " + requestType);
-          consoleOut.println("*** ERROR: exception: " + ex);
-          consoleOut.println("*** ERROR: exception: " + ex.getMessage());
-          consoleOut.println("*** ERROR: stack trace:  ");
-          consoleOut.printlnIndented("*** ERROR:   ", ex.getStackTrace());
-          run.setResult(Result.FAILURE); // Fail this build step.
-        }
-      }
-      if (reqID == null) {
-        consoleOut.println("\n*** ERROR: No such request '" + theReq + "'!");
-        run.setResult(Result.FAILURE); // Fail this build step.
-      } else {
-        consoleOut.println("Requesting execution of request '" + theReq + "'(id=" + reqID + ")");
-        consoleOut.println("   on Execution Manager @ " + ctmConfig.getUrl());
+      TandS tenantAndSuitePair = TenantAndSuite(request.getName().trim());
+      String tenantName = tenantAndSuitePair.TenantName;
+      String suiteName = tenantAndSuitePair.SuiteName;
 
-        // Use TreeMap so that the keys are sorted
-        Map<String, String> params = new TreeMap<String, String>(processParameters());
-        if (params.keySet().size() > 0) {
-          consoleOut.println("   with parameters (key=value):");
-          for (String key : params.keySet()) {
-            String value = params.get(key);
-            String sanitizedValue = server.sanitizeParameter(value);
-            if (!value.equals(sanitizedValue)) {
-              value = sanitizedValue + " (sanitized from '" + value + "')";
-            }
-            consoleOut.println("      " + key + "=" + value);
-          }
-        }
+      WorksoftTenant tenant = null;
+      String tenantId = "";
+      String suiteId = "";
+
+      consoleOut.println("\n    Tenant: " + tenantName);
+      consoleOut.println("\n    Suite: " + suiteName);
+      try {
+        tenant = MatchingTenantFromServer(authResult, tenantName);
+        //firstTenant = FirstTenantFromServer(authResult);
+        //if(firstTenant == null) throw new RuntimeException("No tenants");
+        //tenantId = firstTenant.TenantId;
+        if(tenant == null) throw new RuntimeException("Unable to find matching tenant: " + tenantName);
+        tenantId = tenant.TenantId;
+
+        consoleOut.println("\n   TenantId: " + tenantId);
+
+        suiteId = MatchingSuiteIdentifier(suiteName, tenantId, authResult);
+
+        consoleOut.println("Invoking execution of CTM Suite '" + suiteName + "'(id=" + suiteId + ")");
+        consoleOut.println("   on Continuous Testing Manager @ " + ctmConfig.getUrl());
         consoleOut.println("\n");
-        guid = server.executeRequest(reqID, params);
-        if (guid == null) {
+
+        guid = authResult.Server.executeSuite(suiteId);
+        if(guid == null
+          || StringUtils.isEmpty(guid)) throw new RuntimeException("No execution identifier returned, there was a failure in CTM");
+
+        /*if (guid == null) {
           CTMResult result = server.getLastCTMResult();
           String err = result.dumpDebug();
           if (result.getJsonData() != null) {
@@ -659,145 +787,16 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
           }
           consoleOut.println("\n*** ERROR: Request to execute '" + theReq + "' failed:");
           consoleOut.printlnIndented("   ", err);
-        }
-      }
-    }
-    return guid;
-  }
+        } */
 
-  // Called via reflection from the dispatcher above to execute a 'bookmark'
-  public String execute_BOOKMARK () throws InterruptedException, IOException {
-    String guid = null;
-    if (bookmark == null || StringUtils.isEmpty(bookmark.getName())) {
-      consoleOut.println("\n*** ERROR: A bookmark name or ID must be specified!");
-      run.setResult(Result.FAILURE); // Fail this build step.
-    } else {
-      String bmarkID = null;
-      String theBmark = bookmark.getName().trim();
-      JSONObject bmarks;
-
-      if ((bmarks = server.bookmarks()) != null) {
-        try {
-          // Lookup all the bookmarks defined on the EM and find the one specified
-          // by the user.
-          JSONArray objs = bmarks.getJSONArray("objects");
-          for (int i = 0; i < objs.size(); i++) {
-            JSONObject bmark;
-            if ((bmark = objs.getJSONObject(i)).getString("Name").equals(theBmark) ||
-                    bmark.getString("Id").equals(theBmark)) {
-              bmarkID = bmark.getString("Id");
-              break;
-            }
-          }
-        } catch (Exception ex) {
-          consoleOut.println("\n*** ERROR: unexpected error during execute_REQUEST:");
-          consoleOut.println("*** ERROR: unexpected error while processing request: " + requestType);
-          consoleOut.println("*** ERROR: exception: " + ex);
-          consoleOut.println("*** ERROR: exception: " + ex.getMessage());
-          consoleOut.println("*** ERROR: stack trace:  ");
-          consoleOut.printlnIndented("*** ERROR:   ", ex.getStackTrace());
-          run.setResult(Result.FAILURE); // Fail this build step.
-        }
+        consoleOut.println("\n    CTM Execution Result Identifier: " + guid);
       }
-      if (bmarkID == null) {
-        consoleOut.println("\n*** ERROR: No such bookmark '" + theBmark + "'!");
+      catch(Exception ex) {
+        consoleOut.println("\n*** ERROR: (during execute suite) " + ex.getMessage());
         run.setResult(Result.FAILURE); // Fail this build step.
-      } else {
-        consoleOut.println("Requesting execution of bookmark '" + theBmark + "'(id=" + bmarkID + ")");
-        consoleOut.println("   on Execution Manager @ " + ctmConfig.getUrl());
-        if (StringUtils.isNotEmpty(bookmark.getFolder())) {
-          consoleOut.println("   with results folder='" + bookmark.getFolder() + "'");
-        }
-
-        // Use TreeMap so that the keys are sorted
-        Map<String, String> params = new TreeMap<String, String>(processParameters());
-        if (params.keySet().size() > 0) {
-          consoleOut.println("   with parameters (key=value):");
-          for (String key : params.keySet()) {
-            String value = params.get(key);
-            String sanitizedValue = server.sanitizeParameter(value);
-            if (!value.equals(sanitizedValue)) {
-              value = sanitizedValue + " (sanitized from '" + value + "')";
-            }
-            consoleOut.println("      " + key + "=" + value);
-          }
-        }
-        consoleOut.println("\n");
-        guid = server.executeBookmark(bmarkID, bookmark.getFolder(), params);
-        if (guid == null) {
-          CTMResult result = server.getLastCTMResult();
-          String err = result.dumpDebug();
-          if (result.getJsonData() != null) {
-            try {
-              err = result.getJsonData().getString("Message");
-            } catch (Exception ignored) {
-            }
-          }
-          consoleOut.println("\n*** ERROR: Request to execute bookmark failed:");
-          consoleOut.printlnIndented("   ", err);
-        }
       }
     }
     return guid;
   }
 
-  // Called via reflection from the dispatcher above to execute a 'process list'
-  private String execute_PROCESSLIST () throws InterruptedException, IOException {
-    JSONObject processes = new JSONObject();
-    JSONArray processList = new JSONArray();
-
-    String guid = null;
-    consoleOut.println("Requesting execution of Certify processes");
-    consoleOut.println("   on Execution Manager @ " + ctmConfig.getUrl());
-    consoleOut.println("   with database alias='" + getProcessList().getDatabase() + "'");
-    processes.put("CertifyDatabaseAlias", getProcessList().getDatabase());
-    consoleOut.println("   with project name='" + getProcessList().getProject() + "'");
-    processes.put("ProjectName", getProcessList().getProject());
-    consoleOut.println("   with request name='" + getProcessList().getRequestName() + "'");
-    processes.put("RequestName", getProcessList().getRequestName());
-    if (StringUtils.isNotEmpty(getProcessList().getFolder())) {
-      consoleOut.println("   with results folder='" + getProcessList().getFolder() + "'");
-      processes.put("ResultsFolder", getProcessList().getFolder());
-    }
-    consoleOut.println("   with process path(s):");
-    for (ExecuteCertifyProcess proc : getProcessList().getProcesses()) {
-      if (StringUtils.isNotEmpty(proc.getProcessPath())) {
-        consoleOut.println("      " + proc.getProcessPath());
-        processList.add(proc.getProcessPath());
-      }
-    }
-    processes.put("Processes", processList);
-
-    // Use TreeMap so that the keys are sorted
-    Map<String, String> params = new TreeMap<String, String>(processParameters());
-    if (params.keySet().size() > 0) {
-      consoleOut.println("   with parameters (key=value):");
-      for (String key : params.keySet()) {
-        String value = params.get(key);
-        String sanitizedValue = server.sanitizeParameter(value);
-        if (!value.equals(sanitizedValue)) {
-          value = sanitizedValue + " (sanitized from '" + value + "')";
-        }
-        consoleOut.println("      " + key + "=" + value);
-      }
-    }
-    consoleOut.println("\n");
-
-    //consoleOut.println(JSONUtils.valueToString(processes, 4, 0));
-
-    guid = server.executeProcesses(processes, params);
-    if (guid == null) {
-      CTMResult result = server.getLastCTMResult();
-      String err = result.dumpDebug();
-      if (result.getJsonData() != null) {
-        try {
-          err = result.getJsonData().getString("Message");
-        } catch (Exception ignored) {
-        }
-      }
-      consoleOut.println("\n*** ERROR: Request to execute Certify process(es) failed:");
-      consoleOut.printlnIndented("   ", err);
-    }
-    return guid;
   }
-}

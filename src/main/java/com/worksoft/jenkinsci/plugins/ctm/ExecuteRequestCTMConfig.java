@@ -48,10 +48,12 @@ public final class ExecuteRequestCTMConfig extends AbstractDescribableImpl<Execu
   @DataBoundConstructor
   public ExecuteRequestCTMConfig (@CheckForNull  String url, String credentials) {
     this.url = url;
+    System.out.println("SET ExecuteRequestCTMConfig.data bound constructor url: " + url);
     this.credentials = credentials;
   }
 
   public String getUrl () {
+    System.out.println("GET ExecuteRequestCTMConfig.data bound constructor url: " + url);
     return url;
   }
 
@@ -104,10 +106,14 @@ public final class ExecuteRequestCTMConfig extends AbstractDescribableImpl<Execu
       return ret;
     }
 
+    // this is invoked when an administrator navigates to the "Manage Jenkins" page and then selects "Configuration"
+    // retrieves the Portal URL and credentials that are saved within Jenkins for CTM
     public ListBoxModel doFillCredentialsItems (@AncestorInPath ItemGroup context,
                                                 @QueryParameter String url,
                                                 @QueryParameter String credentialsId) {
       ListBoxModel data = null;
+
+      System.out.println("doFillCredentialsItems - portal url: " + url);
 
       AccessControlled _context = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
       if (_context == null || !_context.hasPermission(Jenkins.ADMINISTER)) {
