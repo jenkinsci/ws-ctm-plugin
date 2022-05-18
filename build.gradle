@@ -53,7 +53,7 @@ jenkinsPlugin {
     shortName = "ws-ctm"
     
     // URL for plugin on Jenkins wiki or elsewhere
-    url = 'https://github.com/jenkinsci/ws-ctm-plugin'
+    url = "https://github.com/jenkinsci/ws-ctm-plugin"
 
     developers {
         developer {
@@ -64,8 +64,8 @@ jenkinsPlugin {
     }
     licenses {
         license {
-            name = 'MIT license',
-            distribution 'repo'
+            name = "MIT license"
+            distribution "repo"
         }
     }
 }
