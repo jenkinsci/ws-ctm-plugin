@@ -35,7 +35,8 @@ repositories {
     }
 }
 
-group = 'org.jenkins-ci.plugins'
+//group = 'org.jenkins-ci.plugins'
+group = 'io.jenkins.plugins'
 description = 'Adds build step(s) for interacting with Worksoft Continuous Test Manager.'
 
 project.ext {
@@ -48,7 +49,8 @@ project.ext {
 apply plugin: 'net.saliman.properties'
 
 jenkinsPlugin {
-    jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
+    //jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
+    jenkinsVersion="2.277.1"
     displayName = "Worksoft Continuous Test Manager Plugin"
     shortName = "ws-ctm"
     
