@@ -1,0 +1,203 @@
+:imagesdir: images
+:thumbnail: width=80%,align="center"
+
+
+= Worksoft Continuous Testing Manager Plugin
+
+image:https://img.shields.io/jenkins/plugin/v/ws-ctm.svg[Jenkins Plugin,link=https://plugins.jenkins.io/worksoft-continuous-testing-manager]
+image:https://img.shields.io/github/release/jenkinsci/worksoft-continuous-testing-manager-plugin.svg?label=changelog[link="https://github.com/jenkinsci/worksoft-ctm-plugin/releases/latest"]
+image:https://img.shields.io/jenkins/plugin/i/ws-ctm-plugin.svg?color=blue[Jenkins Plugin Installs,link=https://plugins.jenkins.io/worksoft-ctm-plugin]
+
+[width="100%",cols="100%",options="header",]
+|===
+|*Plugin Information*
+|View Worksoft Continuous Testing Manager https://plugins.jenkins.io/worksoft-ctm-plugin [on the plugin site] for more information.
+|===
+
+== Description
+
+This is the official Worksoft Supported Plugin for Worksoft Continuous Testeing Manager (CTM).
+The plugin adds build steps for interacting with a Worksoft's Continuous Testing Manager to run your Certify processes.
+
+== Installation
+
+NOTE: This plugin requires Worksoft's Continuous Testing Manager.
+
+
+=== Update Center
+
+. Open Jenkins in a browser (e.g. `\http://<jenkins-host>:8080`)
+. Navigate to *Manage Jenkins -> Manage Plugins* view
+. Under the *Available* tab find the _Worksoft Continuous Testing Manager_ plugin and check the box adjacent to the plugin and click *Install without restart*:
+
+image::plugin_install.png[Plugin Installation,{thumbnail}]
+
+=== Manual Install
+
+. Download *ws-ctm-plugin.hpi* from https://plugins.jenkins.io/ws-ctm-plugin
+. Open Jenkins in a browser (e.g. `\http://<jenkins-host>:8080`)
+. Navigate to *Manage Jenkins* -> *Manage Plugins* and select the *Advanced* tab.
+. Click the **Choose File** button in the *Upload Plugin* section.
+. Find the location of the *ws-ctm-plugin.hpi* file and click the *Open* button and *Upload* the file.
+. Restart Jenkins, if necessary.
+
+== Usage
+
+=== Configure Global Worksoft Continuous Testing Manager Settings
+
+The plugin provides a means to configure an Continuous Testing Manager's URL and credentials used by all Continuous Testing Manager build steps (unless overridden).
+To configure this, navigate to _Jenkins global configuration settings and paths_ (Jenkins -> Manage Jenkins -> Configure System) and locate the *Global Worksoft Continuous Testing Manager Settings* section:
+
+image::image2.png[Global Settings,{thumbnail}]
+
+Configure the URL of the Worksoft Portal (typically http://<em-host>/portal).  Please also use user credentials from Worksoft Portal that have all the necessary permissiona dnd roles to retrieve a list of CTM Suites, and perform execution within CTM.
+
+Save these configuration settings after which they can be used by Continuous Testing Manager build steps (Freestyle and Pipeline).
+
+=== Freestyle Project
+
+Create a Freestyle project and add the *Run Continuous Testing Manager Suite* build step:
+
+image::image5.png[Build Step,{thumbnail}]
+
+
+==== Continuous Testing Manager Suite
+
+Select *CTM Suite* to run a predefined suite configured within Continuous Testing Manager.
+The *Name* list box will be populated with all available CTM Suites of which one must be selected.   It will include all the Suites associated with each of tenants the user account belongs to.   The list will be shown in the format "<Tenant Name> / <CTM Suite Name>".
+
+image::image7.png[Request,{thumbnail}]
+
+
+==== Configure Alternative Continuous Testing Manager
+
+A Continuous Testing Manager build step can override the global Continuous Testing Manager configuration (see above) by configuring an alternative:
+
+image::image17.png[Alt execution,{thumbnail}]
+
+Configure the URL of the Worksoft Portal (typically http://<em-host>/portal):
+
+image::image18.png[Portal URL,{thumbnail}]
+
+
+Optionally, execution wait configuration can be specified.
+Both the polling interval and maximum run time must be specified in seconds:
+
+image::image22.png[Wait Times,{thumbnail}]
+
+=== Output
+
+This plugin outputs the Worksoft Continuous Testing Manager result set in JSON format to a file named - *execMan-result.json* - in the associated Jenkins job's workspace directory.
+For example:
+
+[source,json]
+----
+{
+   "SuiteExecutionResultId":"d19dc7c8-ce42-42a8-8d8c-08da377f4df6",
+   "SuiteId":"e270d12c-b959-43ea-be88-08da338bf4f5",
+   "SuiteExecutionResultStatusTypeId":4,
+   "Result":"Passed",
+   "ErrorMessage":null,
+   "CreatedDate":"2022-05-16T21:01:53.53+00:00",
+   "StartedDate":"2022-05-16T21:01:54.1043184+00:00",
+   "CompletedDate":"2022-05-16T21:03:29.92+00:00",
+   "AbortedDate":null,
+   "PendingExecutions":[
+
+   ],
+   "ActiveExecutions":[
+
+   ],
+   "CompletedExecutions":[
+      {
+         "CompletedExecutionId":"de841199-c50d-4dc3-70b8-08da377f875d",
+         "PendingExecutionId":"d5a7b6ba-1834-4ad7-af0c-08da377f4df9",
+         "ActiveExecutionId":"c4ad9798-d381-4646-cb7a-08da377f4e3b",
+         "MachineId":"b6392803-de2c-4a48-cbbd-08da34f69592",
+         "MachineCredentialsId":"15ed0a33-2375-4f3f-8c92-08da34f8d15a",
+         "SuiteId":"e270d12c-b959-43ea-be88-08da338bf4f5",
+         "SuiteItemId":"5469f4a0-a24b-4cec-0dd9-08da350e7a3a",
+         "SuiteExecutionResultId":"d19dc7c8-ce42-42a8-8d8c-08da377f4df6",
+         "CertifyProcessId":1,
+         "CertifyProcessName":"my process",
+         "TestsetId":null,
+         "CertifyResult":"passed",
+         "CertifyDatabaseId":"ffcd9693-b070-4a89-534a-08da350e563c",
+         "LogHeaderId":"3",
+         "CompletedExecutionResult":"",
+         "CompletedExecutionResultTypeId":1,
+         "ErrorMessage":"",
+         "CreatedDate":"2022-05-16T21:03:29.8+00:00",
+         "ExecutionCreatedDate":"2022-05-16T21:01:53.9333333+00:00",
+         "CompletedDate":"2022-05-16T21:03:29.7753219+00:00",
+         "Title":"google - May 16, 2022 16:02:34",
+         "StartTime":"2022-05-16T21:02:39+00:00",
+         "EndTime":"2022-05-16T21:03:28+00:00",
+         "ElapsedTime":"48.4020505",
+         "ProcessCount":"1",
+         "TestStepAbortCount":"0",
+         "TestStepCount":"1",
+         "TestStepFailedCount":"0",
+         "TestStepPassedCount":"1",
+         "TestStepSkippedCount":"0",
+         "ResultsFolder":"Results",
+         "StartingProcessName":"my process",
+         "RetryCount":0
+      }
+   ]
+}
+----
+
+NOTE: See Certify Continuous Testing Manager's API specification for a complete description of the result set.
+
+This file can be read/processed in either a freestyle or pipeline job.
+For example, in a freestyle job, to retrieve from Certify the failed test steps, add a Groovy build step with Groovy code like:
+
+
+== Pipeline DSL Reference
+
+=== Run an Continuous Testing Manager Suite
+
+.Step Action `*execMan`*
+--
+  Parameters::
+    `requestType`::
+    Type: String:::
+    Value: Request
+
+    `altEMConfig` (optional)::
+Optional alternative Continuous Testing Manager configuration. If provided, these parameters override those specified in Jenkins global configuration.
+    Required Parameters:::
+    `url`:::
+    Type: String::::
+    URL of the Worksoft Portal
+    `credentials`:::
+    Type: String::::
+    Username and Password for CTM
+
+`waitConfig` (optional) :: Optional execution request wait configuration.
+Both the polling interval and maximum run time must be specified in seconds
+
+    `pollInterval`:::
+    Type: String::::
+
+    `maxRunTime`:::
+    Type: String::::
+--
+
+
+==== Example pipeline snippets
+
+===== Simple CTM Suite execution:
+----
+execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request'
+----
+
+
+== Changelog
+
+=== Version 1.0.0.0
+* Initial version
+
+
+
