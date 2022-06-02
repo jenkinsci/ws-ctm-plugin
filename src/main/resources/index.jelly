@@ -7,17 +7,6 @@
   -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
-    <l:header>
-        <style>
-            input.alignprops {
-            margin-right:5px;
-            width: calc(50% - 5px);
-            float: left;
-            }
-        </style>
-    </l:header>
-    <div>
-        Adds build step for interacting with Worksoft Continuous Test Manager.
-    </div>
-</j:jelly>
+<div>
+    Adds build step for interacting with Worksoft Continuous Test Manager.
+</div>
