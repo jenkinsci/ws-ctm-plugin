@@ -135,6 +135,9 @@ public final class ExecuteRequestCTMConfig extends AbstractDescribableImpl<Execu
     }
 
     public FormValidation doTestConnection (@QueryParameter final String url, @QueryParameter final String credentials) {
+      if(!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+        return FormValidation.error("Insufficient permissions!");
+      }
       if (StringUtils.isBlank(credentials)) {
         return FormValidation.error("Credentials must be selected!");
       }

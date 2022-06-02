@@ -14,6 +14,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -65,6 +66,9 @@ public final class ExecuteSuite extends AbstractDescribableImpl<ExecuteSuite> {
                                             @RelativePath("..") @QueryParameter String executeTenant,
                                             @RelativePath("../altCTMConfig") @QueryParameter String url,
                                             @RelativePath("../altCTMConfig") @QueryParameter String credentials) {
+      if(!Jenkins.get().hasPermission(Jenkins.READ)) {
+        return new ListBoxModel();
+      }
       System.out.println("\n---------------------------------------\ndofillnameItems for suites.......");
       return CTMExecute.fillItems("request", executeTenant, url, credentials);
     }
