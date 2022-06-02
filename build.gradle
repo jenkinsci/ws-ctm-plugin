@@ -35,7 +35,8 @@ repositories {
     }
 }
 
-group = 'org.jenkins-ci.plugins'
+//group = 'org.jenkins-ci.plugins'
+group = 'io.jenkins.plugins'
 description = 'Adds build step(s) for interacting with Worksoft Continuous Test Manager.'
 
 project.ext {
@@ -48,18 +49,25 @@ project.ext {
 apply plugin: 'net.saliman.properties'
 
 jenkinsPlugin {
-    jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
+    //jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
+    jenkinsVersion="2.277.1"
     displayName = "Worksoft Continuous Test Manager Plugin"
-    shortName = "worksoft-ctm"
+    shortName = "ws-ctm"
     
     // URL for plugin on Jenkins wiki or elsewhere
-    url = 'https://github.com/jenkinsci/worksoft-ctm-plugin'
+    url = "https://github.com/jenkinsci/ws-ctm-plugin"
 
     developers {
         developer {
             id = "worksoft"
             name = "Worksoft, Inc."
             email = "jenkins-maintainers@worksoft.com"
+        }
+    }
+    licenses {
+        license {
+            name = "MIT license"
+            distribution "repo"
         }
     }
 }
