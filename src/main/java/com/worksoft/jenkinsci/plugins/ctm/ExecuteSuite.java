@@ -12,6 +12,7 @@ import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.model.Job;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
@@ -20,6 +21,7 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import javax.annotation.Nonnull;
 
@@ -62,11 +64,12 @@ public final class ExecuteSuite extends AbstractDescribableImpl<ExecuteSuite> {
     }
 
     // Called whenever emRequestType or alternative CTM config changes
+    @RequirePOST
     public ListBoxModel doFillNameItems (@RelativePath("..") @QueryParameter String requestType,
                                             @RelativePath("..") @QueryParameter String executeTenant,
                                             @RelativePath("../altCTMConfig") @QueryParameter String url,
                                             @RelativePath("../altCTMConfig") @QueryParameter String credentials) {
-      if(!Jenkins.get().hasPermission(Jenkins.READ)) {
+      if(!Jenkins.get().hasPermission(Job.CONFIGURE)) {
         return new ListBoxModel();
       }
       System.out.println("\n---------------------------------------\ndofillnameItems for suites.......");

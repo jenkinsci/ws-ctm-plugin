@@ -33,6 +33,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import javax.annotation.CheckForNull;
 import java.net.MalformedURLException;
@@ -134,6 +135,7 @@ public final class ExecuteRequestCTMConfig extends AbstractDescribableImpl<Execu
       return data;
     }
 
+    @RequirePOST
     public FormValidation doTestConnection (@QueryParameter final String url, @QueryParameter final String credentials) {
       if(!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
         return FormValidation.error("Insufficient permissions!");
