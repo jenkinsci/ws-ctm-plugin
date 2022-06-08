@@ -57,6 +57,21 @@ jenkinsPlugin {
     // URL for plugin on Jenkins wiki or elsewhere
     url = "https://github.com/jenkinsci/ws-ctm-plugin"
 
+    repoUrl = 'https://repo.jenkins-ci.org/releases'
+    snapshotRepoUrl = 'https://repo.jenkins-ci.org/snapshots'
+
+    // enable injection of additional tests for checking the syntax of Jelly and other things
+    disabledTestInjection = false
+
+// disable configuration of Maven Central, the local Maven cache and the Jenkins Maven repository, defaults to true
+    configureRepositories = false
+
+    // skip configuration of publications and repositories for the Maven Publishing plugin, defaults to true
+    configurePublishing = false
+
+    // plugin file extension, either 'jpi' or 'hpi', defaults to 'hpi'
+    fileExtension = 'hpi'
+
     developers {
         developer {
             id = "worksoft"
@@ -117,6 +132,25 @@ task listCompile(group: 'debugging', description: 'show compile configuration') 
 }
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+
+publishing {
+        publications {
+            maven(MavenPublication) {
+                from components.java
+            }
+        }
+
+        repositories {
+            maven {
+                name 'jenkins'
+                if (project.version.toString().endsWith('-SNAPSHOT')) {
+                    url System.properties['jpi.snapshotRepoUrl'] ?: 'https://repo.jenkins-ci.org/snapshots'
+                } else {
+                    url System.properties['jpi.repoUrl'] ?: 'https://repo.jenkins-ci.org/releases'
+                }
+            }
+        }
+    }
 
 tasks.named('server').configure {
     execSpec {
