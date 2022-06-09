@@ -25,6 +25,7 @@ plugins {
     id 'com.github.onslip.gradle-one-jar' version '1.0.5'
 }
 
+apply plugin: 'maven-publish'
 apply plugin: 'idea'
 
 // Where to resolve external dependencies.
