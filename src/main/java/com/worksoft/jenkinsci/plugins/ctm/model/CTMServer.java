@@ -329,11 +329,29 @@ public class CTMServer {
   public HashSet<CTMSuite> suites(String tenantId, String suitename) {
     HashSet<CTMSuite> suitesForTenant = new HashSet<CTMSuite>();
 
+    suitesForTenant = getSuites(tenantId, suitename, 1);
+    if (suitesForTenant == null || suitesForTenant.size() == 0) {
+      throw new RuntimeException("No CTM Suites found fot tenantId: " + tenantId);
+    } else if (suitesForTenant.size() > 100) {
+      CTMSuite suite = suitesForTenant.stream().findFirst().get();
+      int maxPageNo = getMaxPageNumber(suite);
+      for (int i = 2; i <= maxPageNo; i++) {
+        HashSet<CTMSuite> nextSuitesForTenant = getSuites(tenantId, suitename, i);
+        if (nextSuitesForTenant != null && nextSuitesForTenant.size() > 0) {
+          suitesForTenant.addAll(nextSuitesForTenant);
+        }
+      }
+    }
+    return suitesForTenant;
+  }
+
+  private HashSet<CTMSuite> getSuites(String tenantId, String suitename, int pageNo) {
+    HashSet<CTMSuite> suitesForTenant = new HashSet<CTMSuite>();
     String url = this.ctmUrl + "api/Suite/All";
-    String body = "{\"TenantId\":" + tenantId + ",\"SuiteName\":" + suitename + "}";
+    String body = "{\"PageSize\":" + pageNo + ",\"TenantId\":" + tenantId + ",\"SuiteName\":" + suitename + "}";
 
     if (suitename == null || suitename.trim() == "") {
-      body = "{\"TenantId\":" + tenantId + "}";
+      body = "{\"PageSize\":" + pageNo + ",\"TenantId\":" + tenantId + "}";
     }
 
     System.out.println("\n-------------------------CTM Suites\n");
@@ -343,31 +361,40 @@ public class CTMServer {
 
     CTMResult result = sendRequest(httpRequest);
 
-    if (result.is200()) {
+    if (result != null && result.is200()) {
       System.out.println(result.dumpDebug());
       JSONObject data = result.getJsonData();
-      if (data == null)
-        throw new RuntimeException(
-            "Failed to identify CTM Suites for tenantId: " + tenantId);
-      JSONArray data0 = new JSONArray();
-      data0.add(data);
-      if (data0 == null || data0.size() <= 0)
-        throw new RuntimeException(
-            "No CTM suites returned for tenantID: " + tenantId);
-      JSONObject data1 = data0.getJSONObject(0);
-      JSONArray suites = data1.getJSONArray("objects");
-      if (suites == null || suites.size() <= 0)
-        throw new RuntimeException(
-            "No CTM Suites returned with the tenantId: " + tenantId);
-      for (int i = 0; i < suites.size(); i++) {
-        JSONObject jsonSuite = suites.getJSONObject(i);
-        CTMSuite s = new CTMSuite(jsonSuite);
-        suitesForTenant.add(s);
+      if (data != null) {
+        JSONArray data0 = new JSONArray();
+        data0.add(data);
+        if (data0 != null && data0.size() > 0) {
+          JSONObject data1 = data0.getJSONObject(0);
+          JSONArray suites = data1.getJSONArray("objects");
+          if (suites != null && suites.size() > 0) {
+            for (int i = 0; i < suites.size(); i++) {
+              JSONObject jsonSuite = suites.getJSONObject(i);
+              CTMSuite s = new CTMSuite(jsonSuite);
+              suitesForTenant.add(s);
+            }
+          }
+        }
       }
-      return suitesForTenant;
     }
+    return suitesForTenant;
+  }
 
-    return null;
+  public int getMaxPageNumber(CTMSuite suite) {
+    int pageNo = 1;
+    if (suite != null && suite.RecordCount != "") {
+      try {
+        int recordCount = Integer.parseInt(suite.RecordCount);
+        if (recordCount > 100) {
+          pageNo = (int) Math.ceil(recordCount / 100);
+        }
+      } catch (Exception e) {
+      }
+    }
+    return pageNo;
   }
 
   public String escapeParameter(String value) {
