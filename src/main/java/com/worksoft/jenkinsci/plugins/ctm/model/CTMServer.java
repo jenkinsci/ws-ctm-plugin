@@ -49,6 +49,9 @@ public class CTMServer {
   private String authenticationUrl = "";
   private String ctmUrl = "";
   private CTMResult lastCTMResult;
+  private static final String MMddyyyy = "MM/dd/yyyy";
+  private static final String yyyyMMdd = "yyyy-MM-dd";
+  private static final int PAGE_SIZE = 100;
 
   public CTMResult getLastCTMResult() {
     return lastCTMResult;
@@ -232,8 +235,21 @@ public class CTMServer {
     return cal.getTime();
   }
 
+  private Date TodayAddDay(int deltaDay) {
+    Date dt = new Date();
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(dt);
+    cal.add(Calendar.DATE, deltaDay);
+    return cal.getTime();
+  }
+
   private String FormattedDate(Date dt) {
     DateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
+    return formatter.format(dt);
+  }
+
+  private String GetFormattedDate(Date dt, String pattern) {
+    DateFormat formatter = new SimpleDateFormat(pattern);
     return formatter.format(dt);
   }
 
@@ -328,35 +344,47 @@ public class CTMServer {
 
   public HashSet<CTMSuite> suites(String tenantId, String suitename) {
     HashSet<CTMSuite> suitesForTenant = new HashSet<CTMSuite>();
+    Date beginDt = this.TodayAddYear(-3);
+    Date endDt = this.TodayAddDay(1);
+    String begin = this.GetFormattedDate(beginDt, yyyyMMdd) + "T00:00:00.000Z";
+    String end = this.GetFormattedDate(endDt, yyyyMMdd) + "T23:59:59.000Z";
 
-    suitesForTenant = getSuites(tenantId, suitename, 1);
+    suitesForTenant = getSuites(tenantId, suitename, 1, begin, end);
     if (suitesForTenant == null || suitesForTenant.size() == 0) {
       throw new RuntimeException("No CTM Suites found fot tenantId: " + tenantId);
-    } else if (suitesForTenant.size() > 100) {
+    } else if (suitesForTenant.size() >= PAGE_SIZE) {
       CTMSuite suite = suitesForTenant.stream().findFirst().get();
-      int maxPageNo = getMaxPageNumber(suite);
-      for (int i = 2; i <= maxPageNo; i++) {
-        HashSet<CTMSuite> nextSuitesForTenant = getSuites(tenantId, suitename, i);
-        if (nextSuitesForTenant != null && nextSuitesForTenant.size() > 0) {
-          suitesForTenant.addAll(nextSuitesForTenant);
+      if (suite != null && this.getRecordCount(suite.RecordCount) > PAGE_SIZE) {
+        int maxPageNo = this.getMaxPageNumber(suite.RecordCount);
+        for (int i = 2; i <= maxPageNo; i++) {
+          HashSet<CTMSuite> nextSuitesForTenant = getSuites(tenantId, suitename, i, begin, end);
+          if (nextSuitesForTenant != null && nextSuitesForTenant.size() > 0) {
+            suitesForTenant.addAll(nextSuitesForTenant);
+          }
         }
       }
     }
     return suitesForTenant;
   }
 
-  private HashSet<CTMSuite> getSuites(String tenantId, String suitename, int pageNo) {
+  private HashSet<CTMSuite> getSuites(String tenantId, String suitename, int pageNo, String startDate, String endDate) {
     HashSet<CTMSuite> suitesForTenant = new HashSet<CTMSuite>();
     String url = this.ctmUrl + "api/Suite/All";
-    String body = "{\"PageSize\":" + pageNo + ",\"TenantId\":" + tenantId + ",\"SuiteName\":" + suitename + "}";
+    String body = "{\"PageSize\":" + PAGE_SIZE + ",\"PageNumber\":" + pageNo + ",\"TenantId\":\"" + tenantId
+        + "\",\"SuiteName\":\""
+        + suitename + "\",\"StartDate\":\"" + startDate + "\",\"EndDate\":\"" + endDate + "\"}";
 
     if (suitename == null || suitename.trim() == "") {
-      body = "{\"PageSize\":" + pageNo + ",\"TenantId\":" + tenantId + "}";
+      body = "{\"PageSize\":" + PAGE_SIZE + ",\"PageNumber\":" + pageNo + ",\"TenantId\":\"" + tenantId
+          + "\",\"StartDate\":\""
+          + startDate + "\",\"EndDate\":\"" + endDate + "\"}";
     }
 
     System.out.println("\n-------------------------CTM Suites\n");
     System.out.println(url);
+    log.info("Get suite url: " + url + " request body:" + body);
     HttpRequest httpRequest = HttpRequest.post(url);
+    httpRequest.contentType("application/json");
     httpRequest.body(body);
 
     CTMResult result = sendRequest(httpRequest);
@@ -383,16 +411,24 @@ public class CTMServer {
     return suitesForTenant;
   }
 
-  public int getMaxPageNumber(CTMSuite suite) {
-    int pageNo = 1;
-    if (suite != null && suite.RecordCount != "") {
+  private int getRecordCount(String recordCountString) {
+    int recordCount = 0;
+    if (recordCountString != null && recordCountString != "") {
       try {
-        int recordCount = Integer.parseInt(suite.RecordCount);
-        if (recordCount > 100) {
-          pageNo = (int) Math.ceil(recordCount / 100);
-        }
+        recordCount = Integer.parseInt(recordCountString);
       } catch (Exception e) {
       }
+    }
+    ;
+    return recordCount;
+  }
+
+  private int getMaxPageNumber(String recordCountString) {
+    int pageNo = 1;
+    int recordCount = this.getRecordCount(recordCountString);
+    try {
+      pageNo = (int) Math.ceil((double) recordCount / PAGE_SIZE);
+    } catch (Exception e) {
     }
     return pageNo;
   }
@@ -512,10 +548,6 @@ public class CTMServer {
         // payload = Unauthorized;
       } else {
         log.warning("CTM/Portal/api failed " + response.toString(true));
-        // status = false;
-        // if (payload != null) {
-        // payload = response.statusPhrase();
-        // }
       }
     } catch (Throwable t) {
       result = new CTMResult(null);
