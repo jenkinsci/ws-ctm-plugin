@@ -5,7 +5,7 @@
 = Worksoft Continuous Testing Manager Plugin
 
 image:https://img.shields.io/jenkins/plugin/v/ws-ctm.svg[Jenkins Plugin,link=https://plugins.jenkins.io/ws-ctm-plugin]
-image:https://img.shields.io/github/release/jenkinsci/worksoft-continuous-testing-manager-plugin.svg?label=changelog[link="https://github.com/jenkinsci/worksoft-ctm-plugin/releases/latest"]
+image:https://img.shields.io/github/release/jenkinsci/worksoft-continuous-testing-manager-plugin.svg?label=changelog[link="https://github.com/jenkinsci/ws-ctm-plugin/releases/latest"]
 image:https://img.shields.io/jenkins/plugin/i/ws-ctm-plugin.svg?color=blue[Jenkins Plugin Installs,link=https://plugins.jenkins.io/ws-ctm-plugin]
 
 [width="100%",cols="100%",options="header",]

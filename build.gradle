@@ -36,8 +36,8 @@ repositories {
     }
 }
 
-//group = 'org.jenkins-ci.plugins'
-group = 'io.jenkins.plugins'
+group = 'org.jenkins-ci.plugins'
+//group = 'io.jenkins.plugins'
 description = 'Adds build step(s) for interacting with Worksoft Continuous Test Manager.'
 
 project.ext {
@@ -149,9 +149,16 @@ publishing {
                 } else {
                     url System.properties['jpi.repoUrl'] ?: 'https://repo.jenkins-ci.org/releases'
                 }
+                credentials {
+                    username = "glenpgillman"
+                    password = "AP6rzzcGDpojCY69J35VGQFhpB8"
+                }
             }
         }
     }
+//password = "hrBcJCotgbKEEp"
+//username = project.stringProp(“jenkins.username”)
+//password = project.stringProp(“jenkins.password”)
 
 tasks.named('server').configure {
     execSpec {
