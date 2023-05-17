@@ -69,7 +69,7 @@ public final class ExecuteSuite extends AbstractDescribableImpl<ExecuteSuite> {
                                             @RelativePath("..") @QueryParameter String executeTenant,
                                             @RelativePath("../altCTMConfig") @QueryParameter String url,
                                             @RelativePath("../altCTMConfig") @QueryParameter String credentials) {
-      if(!Jenkins.get().hasPermission(Job.CONFIGURE)) {
+      if(!Jenkins.get().hasPermission(Jenkins.READ)) {
         return new ListBoxModel();
       }
       System.out.println("\n---------------------------------------\ndofillnameItems for suites.......");
