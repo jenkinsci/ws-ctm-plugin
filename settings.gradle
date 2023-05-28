@@ -7,5 +7,4 @@
  * @author rrinehart
  */
 
-//for publish has to be short version instead of ws-ctm-plugin
-rootProject.name = 'ws-ctm'
+rootProject.name = 'worksoft-ctm-plugin'
