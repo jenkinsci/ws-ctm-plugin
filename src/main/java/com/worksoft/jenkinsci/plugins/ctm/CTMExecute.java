@@ -21,6 +21,15 @@ import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
+import jenkins.model.GlobalConfiguration;
+import jenkins.tasks.SimpleBuildStep;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,35 +41,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nonnull;
-import jenkins.model.GlobalConfiguration;
-import jenkins.tasks.SimpleBuildStep;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.Symbol;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 
 public class CTMExecute extends Builder implements SimpleBuildStep {
-
-  private static final Logger log = Logger.getLogger(
-    "jenkins.wsCTMServer.Execute"
-  );
+  private static final Logger log = Logger.getLogger("jenkins.wsCTMServer.Execute");
 
   public class ConsoleStream extends PrintStream {
-
-    public ConsoleStream(OutputStream out) {
+    public ConsoleStream (OutputStream out) {
       super(out);
     }
 
     @Override
-    public void println(String string) {
+    public void println (String string) {
       Date now = new Date();
       DateFormat dateFormatter = DateFormat.getDateTimeInstance(
-        DateFormat.SHORT,
-        DateFormat.MEDIUM,
-        Locale.getDefault()
-      );
+              DateFormat.SHORT,
+              DateFormat.MEDIUM,
+              Locale.getDefault());
       Scanner scanner = new Scanner(string);
       while (scanner.hasNextLine()) {
         String line = scanner.nextLine();
@@ -69,7 +65,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
       scanner.close();
     }
 
-    public void printlnIndented(String indent, String string) {
+    public void printlnIndented (String indent, String string) {
       Scanner scanner = new Scanner(string);
       while (scanner.hasNextLine()) {
         String line = scanner.nextLine();
@@ -78,7 +74,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
       scanner.close();
     }
 
-    public void printlnIndented(String indent, Object[] objects) {
+    public void printlnIndented (String indent, Object[] objects) {
       for (Object obj : objects) {
         printlnIndented(indent, obj.toString());
       }
@@ -105,7 +101,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
   private ConsoleStream consoleOut; // Console output stream
 
   @DataBoundConstructor
-  public CTMExecute(String requestType) {
+  public CTMExecute (String requestType) {
     this.requestType = requestType;
 
     // When we get here Jenkins is saving our form values, so we can invalidate
@@ -114,40 +110,41 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     //TenantCache.invalidateTenantsCache();
   }
 
-  public boolean getExecParamsEnabled() {
+  public boolean getExecParamsEnabled () {
     return getExecParams() != null;
   }
 
-  public ExecuteRequestParameters getExecParams() {
+  public ExecuteRequestParameters getExecParams () {
     return execParams;
   }
 
-  public boolean getPostExecuteEnabled() {
+  public boolean getPostExecuteEnabled () {
     return getPostExecute() != null;
   }
 
-  public ExecuteRequestPostExecute getPostExecute() {
+  public ExecuteRequestPostExecute getPostExecute () {
     return postExecute;
   }
 
-  public boolean getWaitConfigEnabled() {
+  public boolean getWaitConfigEnabled () {
     return getWaitConfig() != null;
   }
 
-  public ExecuteWaitConfig getWaitConfig() {
+  public ExecuteWaitConfig getWaitConfig () {
     return waitConfig;
   }
 
-  public boolean getAltEMConfigEnabled() {
+  public boolean getAltEMConfigEnabled () {
     return getAltCTMConfig() != null;
   }
 
-  public ExecuteRequestCTMConfig getAltCTMConfig() {
+  public ExecuteRequestCTMConfig getAltCTMConfig () {
     return altCTMConfig;
   }
 
-  public String getRequestType() {
-    if (requestType == null || StringUtils.isEmpty(requestType)) {
+  public String getRequestType () {
+    if(requestType == null
+            || StringUtils.isEmpty(requestType)) {
       // When we get here Jenkins is loading our form values, so we can invalidate
       // this session's itemsCache.
       CTMItemCache.invalidateItemsCache();
@@ -156,51 +153,45 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     return requestType;
   }
 
-  public ExecuteSuite getRequest() {
+  public ExecuteSuite getRequest () {
     return request;
   }
-
   //public ExecuteTenant getExecuteTenant() {
-  //return executeTenant;
+    //return executeTenant;
   //}
   @DataBoundSetter
-  public void setRequestType(@Nonnull String requestType) {
-    System.out.println(
-      "\n----------- databound setter - requestType: " + requestType
-    );
+  public void setRequestType (@Nonnull String requestType) {
+    System.out.println("\n----------- databound setter - requestType: " + requestType);
     this.requestType = requestType;
   }
-
   @DataBoundSetter
-  public void setRequest(ExecuteSuite request) {
-    System.out.println(
-      "\n----------- databound setter - suite: " + request.getName()
-    );
+  public void setRequest (ExecuteSuite request) {
+    System.out.println("\n----------- databound setter - suite: " + request.getName());
     this.request = request;
   }
-
-  /*  @DataBoundSetter
+/*  @DataBoundSetter
   public void setExecuteTenant (ExecuteTenant executeTenant) {
     System.out.println("\n----------- databound setter - executeTenant: " + executeTenant.getName());
     this.executeTenant = executeTenant;
   }*/
   @DataBoundSetter
-  public void setPostExecute(ExecuteRequestPostExecute postExecute) {
+  public void setPostExecute (ExecuteRequestPostExecute postExecute) {
     this.postExecute = postExecute;
   }
 
   @DataBoundSetter
-  public void setAltCTMConfig(ExecuteRequestCTMConfig altCTMConfig) {
+  public void setAltCTMConfig (ExecuteRequestCTMConfig altCTMConfig) {
     this.altCTMConfig = altCTMConfig;
   }
 
   @DataBoundSetter
-  public void setWaitConfig(ExecuteWaitConfig waitConfig) {
+  public void setWaitConfig (ExecuteWaitConfig waitConfig) {
     this.waitConfig = waitConfig;
   }
 
   @DataBoundSetter
-  public void setExecParams(ExecuteRequestParameters execParams) {
+  public void setExecParams (ExecuteRequestParameters execParams) {
+
     try {
       this.execParams = execParams;
     } catch (Exception e) {
@@ -210,11 +201,10 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
   }
 
   // Call from the jelly to determine whether radio block is checked
-  public String emRequestTypeEquals(String given) {
+  public String emRequestTypeEquals (String given) {
     return String.valueOf((requestType != null) && (requestType.equals(given)));
   }
-
-  /*  public boolean tenantSet() {
+/*  public boolean tenantSet() {
     boolean result =  executeTenant != null
             && !StringUtils.isEmpty(executeTenant.name);
     System.out.println("tenantSet ----- " + result);
@@ -223,48 +213,33 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
 
   @Symbol("execMan")
   @Extension
-  public static final class ExecutionManagerBuilderDescriptor
-    extends BuildStepDescriptor<Builder> {
+  public static final class ExecutionManagerBuilderDescriptor extends BuildStepDescriptor<Builder> {
 
     @Override
-    public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+    public boolean isApplicable (Class<? extends AbstractProject> jobType) {
       return true;
     }
 
     @Override
     @Nonnull
-    public String getDisplayName() {
+    public String getDisplayName () {
       return "Run Continuous Testing Manager Suite";
     }
   }
 
-  private static ExecuteRequestCTMConfig Configuration(
-    String portalUrl,
-    String credentials
-  ) {
+  private static ExecuteRequestCTMConfig Configuration(String portalUrl, String credentials) {
     CTMConfig globalConfig = GlobalConfiguration.all().get(CTMConfig.class);
-    ExecuteRequestCTMConfig emConfig = globalConfig != null
-      ? globalConfig.getCTMConfig()
-      : null;
-    ExecuteRequestCTMConfig altCTMConfig = new ExecuteRequestCTMConfig(
-      portalUrl,
-      credentials
-    );
+    ExecuteRequestCTMConfig emConfig = globalConfig != null ? globalConfig.getCTMConfig() : null;
+    ExecuteRequestCTMConfig altCTMConfig = new ExecuteRequestCTMConfig(portalUrl, credentials);
     if (altCTMConfig != null && altCTMConfig.isValid()) {
       emConfig = altCTMConfig;
     }
     return emConfig;
   }
-
-  private static ConfigureAndAuth AuthenticateOnly(
-    ExecuteRequestCTMConfig ctmConfig
-  ) {
+  private static ConfigureAndAuth AuthenticateOnly(ExecuteRequestCTMConfig ctmConfig) {
     ConfigureAndAuth result = new ConfigureAndAuth();
     if (ctmConfig != null) {
-      CTMServer server = new CTMServer(
-        ctmConfig.getUrl(),
-        ctmConfig.lookupCredentials()
-      );
+      CTMServer server = new CTMServer(ctmConfig.getUrl(), ctmConfig.lookupCredentials());
       result.Server = server;
       try {
         if (server.login()) {
@@ -277,11 +252,11 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
           }
           if (tenants != null) {
             result.Tenants = tenants;
-          } else {
+          }
+          else {
             result.Error = true;
             result.DisplayErrorMessage = "*** ERROR with tenants ***";
-            result.ErrorMessage =
-              "ERROR: Couldn't retrieve Tenants from authenticated user";
+            result.ErrorMessage = "ERROR: Couldn't retrieve Tenants from authenticated user";
           }
         } else {
           // couldn't login
@@ -296,7 +271,8 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
         result.DisplayErrorMessage = "*** ERROR  *** " + ex.getMessage();
         result.ErrorMessage = "ERROR: Exception while logging in";
       }
-    } else {
+    }
+    else {
       // No CTM configuration
       result.DisplayErrorMessage = "*** ERROR No CTM Configuration ***";
       result.ErrorMessage = "ERROR: No CTM configuration";
@@ -304,16 +280,13 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     }
     return result;
   }
+  private static ConfigureAndAuth Authenticate(String portalUrl, String credentials) {
 
-  private static ConfigureAndAuth Authenticate(
-    String portalUrl,
-    String credentials
-  ) {
     ExecuteRequestCTMConfig ctmConfig = Configuration(portalUrl, credentials);
     return AuthenticateOnly(ctmConfig);
-  }
 
-  /*  public static ListBoxModel tenantsForAuthenticatedUser(String portalUrl, String credentials) {
+  }
+/*  public static ListBoxModel tenantsForAuthenticatedUser(String portalUrl, String credentials) {
     ListBoxModel items = new ListBoxModel();
 
     ConfigureAndAuth authResult = Authenticate(portalUrl, credentials);
@@ -345,18 +318,11 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
   }*/
 
   // Used by doFillRequestItems
-  public static ListBoxModel fillItems(
-    String emRequestType,
-    String executeTenant,
-    String portalUrl,
-    String credentials
-  ) {
+  public static ListBoxModel fillItems (String emRequestType, String executeTenant, String portalUrl, String credentials) {
     ListBoxModel items = new ListBoxModel();
 
-    System.out.println(
-      "\n----------------------------------\nfillItems--------" + executeTenant
-    );
-    /*
+    System.out.println("\n----------------------------------\nfillItems--------" + executeTenant);
+/*
     if(emRequestType == null
       || !emRequestType.equals("request")) {
       items.add("*** Waiting for user to specify type ***", "ERROR: Waiting for user to specify type");
@@ -370,13 +336,15 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
       return items;
     }
 */
-    System.out.println(
-      "\n--------------------fillItems ----------------------------\n"
-    );
+    System.out.println("\n--------------------fillItems ----------------------------\n");
 
     ConfigureAndAuth authResult = Authenticate(portalUrl, credentials);
-    if (!authResult.Error) {
+    if(!authResult.Error) {
       try {
+        //String tenantId = authResult.MatchingTenantId(executeTenant);
+        //String tenantId = authResult.FirstTenant().TenantId;
+        //HashSet<CTMSuite> suitesForTenant = authResult.Server.suites(tenantId);
+
         List<CTMSuite> suites = authResult.Server.suitesForAllTenants();
         if (suites != null) {
           try {
@@ -384,7 +352,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
 
             // Lookup all the Suites defined on the CTM and find the one specified
             // by the user
-            for (CTMSuite suite : suites) {
+            for(CTMSuite suite : suites) {
               String name = suite.Tenant.TenantName + " / " + suite.SuiteName;
               items.add(name, name);
             }
@@ -395,23 +363,18 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
           }
         } else {
           // couldn't get requests
-          items.add(
-            "*** ERROR ***",
-            "ERROR: Couldn't retrieve Suite(s) from CTM (or none for tenant)"
-          );
+          items.add("*** ERROR ***", "ERROR: Couldn't retrieve Suite(s) from CTM (or none for tenant)");
           items.get(items.size() - 1).selected = true;
         }
-      } catch (Exception ex) {
-        System.out.println(
-          "Error retrieving list of suites - " + ex.getMessage()
-        );
-        items.add(
-          "*** ERROR ***",
-          "ERROR: Couldn't retrieve Suite(s) from CTM " + ex.getMessage()
-        );
+
+      }
+      catch(Exception ex) {
+        System.out.println("Error retrieving list of suites - " + ex.getMessage());
+        items.add("*** ERROR ***", "ERROR: Couldn't retrieve Suite(s) from CTM " + ex.getMessage());
         items.get(items.size() - 1).selected = true;
       }
-    } else {
+    }
+    else {
       items.add(authResult.DisplayErrorMessage, authResult.ErrorMessage);
       items.get(items.size() - 1).selected = true;
     }
@@ -423,22 +386,18 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
 
   // Process the user provided parameters by substituting Jenkins environment
   // variables referenced in a parameter's value.
-  private HashMap<String, String> processParameters()
-    throws InterruptedException, IOException {
+  private HashMap<String, String> processParameters () throws InterruptedException, IOException {
     HashMap<String, String> ret = new HashMap<String, String>();
     EnvVars envVars = run.getEnvironment(listener);
     if (execParams != null && execParams.getList() != null) {
       for (ExecuteRequestParameter param : execParams.getList()) {
         String value = param.getValue();
 
-        if (
-          StringUtils.isNotEmpty(param.getKey()) &&
-          StringUtils.isNotEmpty(value)
-        ) {
+        if (StringUtils.isNotEmpty(param.getKey()) &&
+                StringUtils.isNotEmpty(value)) {
+
           // Dereference/expand ALL Jenkins vars within the value string
-          Matcher m = Pattern
-            .compile("([^$]*)[$][{]([^}]*)[}]([^$]*)")
-            .matcher(value);
+          Matcher m = Pattern.compile("([^$]*)[$][{]([^}]*)[}]([^$]*)").matcher(value);
           StringBuilder expandedValue = new StringBuilder();
           boolean found = false;
           while (m.find()) {
@@ -464,19 +423,14 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     return ret;
   }
 
-  private void reportVerboseProcessInformation(
-    ProcessAutomatedExecutionModel[] processes
-  ) {
-    if (processes == null || processes.length == 0) return;
+  private void reportVerboseProcessInformation(ProcessAutomatedExecutionModel[] processes) {
+    if (processes == null
+            || processes.length == 0) return;
 
     try {
       // Print the run's status to the build console
-      consoleOut.println(
-        "Name  Status                     Log Header ID      Resource                            Last Error"
-      );
-      consoleOut.println(
-        "----- -------------------------- ------------------ ----------------------------------- -----------------------------------"
-      );
+      consoleOut.println("Name  Status                     Log Header ID      Resource                            Last Error");
+      consoleOut.println("----- -------------------------- ------------------ ----------------------------------- -----------------------------------");
       for (int i = 0; i < processes.length; i++) {
         ProcessAutomatedExecutionModel p = processes[i];
 
@@ -487,54 +441,40 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
         String logHeaderID = p.LogHeaderId;
 
         consoleOut.println(name + ":");
-        consoleOut.println(
-          String.format(
-            "      %-26.26s %-18s %35s %s",
-            StringUtils.abbreviate(executionStatus, 26),
-            StringUtils.abbreviate(logHeaderID, 18),
-            StringUtils.abbreviate(resourceName, 35),
-            lastReportedError
-          )
-        );
+        consoleOut.println(String.format("      %-26.26s %-18s %35s %s",
+                StringUtils.abbreviate(executionStatus, 26),
+                StringUtils.abbreviate(logHeaderID, 18),
+                StringUtils.abbreviate(resourceName, 35),
+                lastReportedError));
       }
-    } catch (Exception ex) {
+    }
+    catch(Exception ex) {
       System.out.println(ex.getMessage());
       System.out.println(ex.getStackTrace());
     }
   }
-
   private boolean MarkBuildStatusPassed(CTMExecutionResult lastResultInfo) {
     boolean passed = false;
-    if (
-      lastResultInfo.ErrorMessage != null &&
-      StringUtils.isNotEmpty(lastResultInfo.ErrorMessage)
-    ) {
+    if(lastResultInfo.ErrorMessage != null
+       && StringUtils.isNotEmpty(lastResultInfo.ErrorMessage)) {
       passed = false;
-      consoleOut.println(
-        "Automation Error acknowledged, marking Jenkins build as failed - " +
-        lastResultInfo.ErrorMessage
-      );
-    } else if (StringUtils.isNotEmpty(lastResultInfo.Result)) {
+      consoleOut.println("Automation Error acknowledged, marking Jenkins build as failed - " + lastResultInfo.ErrorMessage);
+    } else if(StringUtils.isNotEmpty(lastResultInfo.Result)) {
       String result = lastResultInfo.Result.toUpperCase();
-      if (result.contains("PASS") || result.contains("SUCCESS")) {
+      if(result.contains("PASS")
+        || result.contains("SUCCESS")) {
         passed = true;
       }
-    } else {
+    }
+    else {
       passed = false; // inconclusive
-      consoleOut.println(
-        "Not enough information in CTM response to indicate result information, marking Jenkins build as failed"
-      );
+      consoleOut.println("Not enough information in CTM response to indicate result information, marking Jenkins build as failed");
     }
     return passed;
   }
-
-  private void OnExecutionComplete(
-    CTMExecutionResult lastResultInfo,
-    boolean aborted,
-    String automationGuid
-  ) {
+  private void OnExecutionComplete(CTMExecutionResult lastResultInfo, boolean aborted, String automationGuid) {
     System.out.println("\nOnExecutionComplete - " + automationGuid);
-    if (aborted) {
+    if(aborted) {
       // Tell the CTM to abort execution
       // TODO: implement this feature
       //CTMResult result = server.executionAbort(guid);
@@ -544,30 +484,25 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
       //      }
     }
 
-    if (lastResultInfo != null) {
+    if(lastResultInfo != null) {
       this.reportVerboseProcessInformation(lastResultInfo.CompletedExecutions);
-      if (!aborted) {
-        if (this.MarkBuildStatusPassed(lastResultInfo)) {
+      if(!aborted) {
+        if(this.MarkBuildStatusPassed(lastResultInfo)) {
           run.setResult(Result.SUCCESS);
         } else {
           run.setResult(Result.FAILURE);
         }
       }
     } else {
-      run.setResult(Result.FAILURE);
+        run.setResult(Result.FAILURE);
     }
 
     // Write the response JSON to a file so that it can be processed further by the Jenkins job
     try {
-      FilePath resFile = new FilePath(
-        workspace.getChannel(),
-        workspace + "/execMan-result.json"
-      );
+      FilePath resFile = new FilePath(workspace.getChannel(), workspace + "/execMan-result.json");
       //File resFile = new File(workspace + "/execMan-result.json");
-      if (
-        lastResultInfo != null &&
-        StringUtils.isNotEmpty(lastResultInfo.FullResponse)
-      ) {
+      if (lastResultInfo != null
+        && StringUtils.isNotEmpty(lastResultInfo.FullResponse)) {
         resFile.write(lastResultInfo.FullResponse, null);
         //FileUtils.writeStringToFile(resFile, response.toString());
         consoleOut.println("\nResults written to " + resFile);
@@ -579,23 +514,20 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
       consoleOut.println("*** ERROR: stack trace:  ");
       consoleOut.printlnIndented("*** ERROR:    ", e.getStackTrace());
     }
-  }
 
-  private void waitForCompletion(String guid, ConfigureAndAuth authResult) {
+
+  }
+  private void waitForCompletion (String guid, ConfigureAndAuth authResult) {
     boolean aborted = false;
     String abortReason = "";
 
     // Setup timing variables
-    Long maxRunTime = waitConfig == null
-      ? null
-      : waitConfig.maxRunTimeInMillis();
+    Long maxRunTime = waitConfig == null ? null : waitConfig.maxRunTimeInMillis();
     if (maxRunTime == null) {
       // Default to 1 year maximum run time
       maxRunTime = TimeUnit.MILLISECONDS.convert(365L, TimeUnit.DAYS);
     }
-    Long pollInterval = waitConfig == null
-      ? null
-      : waitConfig.pollIntervalInMillis();
+    Long pollInterval = waitConfig == null ? null : waitConfig.pollIntervalInMillis();
     if (pollInterval == null) {
       // Default to 15 second poll interval
       pollInterval = TimeUnit.MILLISECONDS.convert(15L, TimeUnit.SECONDS);
@@ -622,16 +554,10 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
           if (aborted) {
             // We get here when it's taken too long for the EM to abort execution, so
             // we're abandoning our wait.
-            consoleOut.println(
-              "\n*** ERROR: Abort timed out!!! - abandoning..."
-            );
+            consoleOut.println("\n*** ERROR: Abort timed out!!! - abandoning...");
             abortReason += " (abandoned!)";
           } else {
-            consoleOut.println(
-              "\n*** ERROR: Execution timed out after " +
-              elapsedTime +
-              " - aborting..."
-            );
+            consoleOut.println("\n*** ERROR: Execution timed out after " + elapsedTime + " - aborting...");
 
             aborted = true;
             abortReason = " due to max wait time exceeded";
@@ -640,40 +566,27 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
           break;
         }
 
-        CTMExecutionResult statusResult = authResult.Server.executionStatus(
-          guid
-        );
-        if (statusResult == null || statusResult.ApiFailed) {
+        CTMExecutionResult statusResult = authResult.Server.executionStatus(guid);
+        if (statusResult == null
+                || statusResult.ApiFailed) {
           qtyApiFailures--;
           if (qtyApiFailures < 0) {
-            consoleOut.println(
-              "\n*** ERROR: CTM error while checking execution status:"
-            );
-            consoleOut.printlnIndented(
-              "*** ERROR:   ",
-              statusResult.ApiFailure
-            );
+            consoleOut.println("\n*** ERROR: CTM error while checking execution status:");
+            consoleOut.printlnIndented("*** ERROR:   ", statusResult.ApiFailure);
             break;
           }
         } else {
           lastResultInfo = statusResult;
-          consoleOut.println(
-            "\nElapsed time=" +
-            elapsedTime +
-            " - " +
-            statusResult.MetricProgressInfo() +
-            (aborted ? " *** ABORTING ***" : "")
-          );
+          consoleOut.println("\nElapsed time=" + elapsedTime + " - " +
+                  statusResult.MetricProgressInfo()
+                  + (aborted ? " *** ABORTING ***" : ""));
           if (!statusResult.StillExecuting()) {
             break;
           }
         }
       } catch (InterruptedException e) {
         if (!aborted) {
-          consoleOut.println(
-            "\n*** ERROR: User requested abort of execution after " +
-            elapsedTime
-          );
+          consoleOut.println("\n*** ERROR: User requested abort of execution after " + elapsedTime);
 
           aborted = true;
           abortReason = " due to user request";
@@ -683,10 +596,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
         } else {
           // We'll get here if the user tries to abort an aborting execution, so flag it
           // as such and abandon our wait.
-          consoleOut.println(
-            "\n*** ERROR: User requested abort of execution (again) after " +
-            elapsedTime
-          );
+          consoleOut.println("\n*** ERROR: User requested abort of execution (again) after " + elapsedTime);
           aborted = true;
           abortReason += " (forced!)";
           break;
@@ -697,32 +607,21 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
         break;
       }
     }
-    if (
-      lastResultInfo == null && guid != null && StringUtils.isNotEmpty(guid)
-    ) {
+    if(lastResultInfo == null
+      && guid != null
+      && StringUtils.isNotEmpty(guid)) {
       lastResultInfo = authResult.Server.executionStatus(guid);
     }
     this.OnExecutionComplete(lastResultInfo, aborted, guid);
 
-    consoleOut.println(
-      "\n\nExecution " +
-      run.getResult().toString() +
-      " after - " +
-      elapsedTime +
-      abortReason
-    );
+    consoleOut.println("\n\nExecution " + run.getResult().toString() + " after - " + elapsedTime + abortReason);
   }
 
   // This method is called by Jenkins to perform the build step. It sets up some instance
   // variables, logs in to the EM and dispatches the execute to methods that follow
   // using reflection.
   @Override
-  public void perform(
-    @Nonnull Run<?, ?> run,
-    @Nonnull FilePath workspace,
-    @Nonnull Launcher launcher,
-    @Nonnull TaskListener listener
-  ) throws InterruptedException, IOException {
+  public void perform (@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
     // Save perform parameters in instance variables for future reference.
     this.run = run;
     this.workspace = workspace;
@@ -747,20 +646,22 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     try {
       if (ctmConfig != null && ctmConfig.isValid()) {
         authResult = AuthenticateOnly(ctmConfig);
-        if (authResult.Error) throw new RuntimeException(
-          authResult.ErrorMessage
-        );
+        if(authResult.Error) throw new RuntimeException(authResult.ErrorMessage);
 
         System.out.println("\n---------------- begin execute suite--------\n");
         guid = this.execute_REQUEST(authResult);
-      } else {
+/*        } else {
+          CTMResult result = server.getLastCTMResult();
+          consoleOut.println("\n*** ERROR: Can't log in to '" + ctmConfig.getUrl() + "':");
+          consoleOut.printlnIndented("*** ERROR:   ", result.getResponseData());
+          run.setResult(Result.FAILURE); // Fail this build step.
+        }*/
+      }
+      else {
         throw new RuntimeException("No CTM configuration within Jenkins");
       }
     } catch (Exception ex) {
-      consoleOut.println(
-        "\n*** ERROR: Unexpected error while processing request type: " +
-        requestType
-      );
+      consoleOut.println("\n*** ERROR: Unexpected error while processing request type: " + requestType);
       consoleOut.println("*** ERROR: exception: " + ex);
       consoleOut.println("*** ERROR: exception: " + ex.getMessage());
       consoleOut.println("*** ERROR: stack trace:  ");
@@ -769,10 +670,9 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
       run.setResult(Result.FAILURE); // Fail this build step.
     }
     if (run.getResult() != Result.FAILURE) {
-      if (guid == null || StringUtils.isEmpty(guid)) {
-        consoleOut.println(
-          "\n*** ERROR: An unexpected error occurred while requesting execution!"
-        );
+      if (guid == null
+         || StringUtils.isEmpty(guid)) {
+        consoleOut.println("\n*** ERROR: An unexpected error occurred while requesting execution!");
         run.setResult(Result.FAILURE); // Fail this build step.
       } else {
         waitForCompletion(guid, authResult);
@@ -784,88 +684,69 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
   private WorksoftTenant FirstTenantFromServer(ConfigureAndAuth authResult) {
     WorksoftTenant firstTenant = null;
     HashSet<WorksoftTenant> allTenants = authResult.Server.Tenants();
-    if (
-      allTenants == null || allTenants.size() <= 0
-    ) throw new RuntimeException("No tenants in cache to identify first");
-    for (WorksoftTenant t : allTenants) {
-      firstTenant = t;
-      break;
-    }
-    return firstTenant;
+    if(allTenants == null
+      || allTenants.size() <= 0) throw new RuntimeException("No tenants in cache to identify first");
+      for (WorksoftTenant t : allTenants) {
+        firstTenant = t;
+        break;
+      }
+      return firstTenant;
   }
-
-  private WorksoftTenant MatchingTenantFromServer(
-    ConfigureAndAuth authResult,
-    String tenantName
-  ) {
+  private WorksoftTenant MatchingTenantFromServer(ConfigureAndAuth authResult, String tenantName) {
     WorksoftTenant match = null;
     HashSet<WorksoftTenant> allTenants = authResult.Server.Tenants();
-    if (
-      allTenants == null || allTenants.size() <= 0
-    ) throw new RuntimeException("No tenants in cache to identify first");
+    if(allTenants == null
+            || allTenants.size() <= 0) throw new RuntimeException("No tenants in cache to identify first");
     for (WorksoftTenant t : allTenants) {
-      if (t.TenantName.equals(tenantName)) {
+      if(t.TenantName.equals(tenantName)) {
         match = t;
         break;
       }
     }
     return match;
   }
-
-  private String MatchingSuiteIdentifier(
-    String suiteName,
-    String tenantId,
-    ConfigureAndAuth authResult
-  ) {
+  private String MatchingSuiteIdentifier(String suiteName, String tenantId, ConfigureAndAuth authResult) {
     String suiteId = "";
     boolean found = false;
 
-    // HashSet<CTMSuite> suitesForTenant = authResult.Server.suites(tenantId);
+    //HashSet<CTMSuite> suitesForTenant = authResult.Server.suites(tenantId);
     HashSet<CTMSuite> suitesForTenant = authResult.Server.suites(tenantId,suiteName);
-    if (suitesForTenant == null) throw new RuntimeException(
-      "No response for suites for tenant: " + tenantId
-    );
-    if (suitesForTenant.size() <= 0) throw new RuntimeException(
-      "No suites for tenant: " + tenantId
-    );
-    for (CTMSuite suite : suitesForTenant) {
-      if (suite.SuiteName.equals(suiteName)) {
+    if(suitesForTenant == null) throw new RuntimeException("No response for suites for tenant: " + tenantId);
+    if(suitesForTenant.size() <= 0) throw new RuntimeException("No suites for tenant: " + tenantId);
+    for(CTMSuite suite : suitesForTenant) {
+      if(suite.SuiteName.equals(suiteName)) {
         suiteId = suite.SuiteId;
         found = true;
         break;
       }
     }
-    if (!found) throw new RuntimeException(
-      "No Suite Named '" +
-      suiteName +
-      "' found for tenant, it may have been renamed."
-    );
+    if(!found) throw new RuntimeException("No Suite Named '" + suiteName + "' found for tenant, it may have been renamed.");
 
     return suiteId;
   }
-
   private TandS TenantAndSuite(String tenantAndSuiteName) {
-    if (!tenantAndSuiteName.contains("/")) throw new RuntimeException(
-      "Expected delimiter of '/' for tenant and suite"
-    );
+    if(!tenantAndSuiteName.contains("/")) throw new RuntimeException("Expected delimiter of '/' for tenant and suite");
     int i = tenantAndSuiteName.indexOf("/");
     TandS result = new TandS();
     result.TenantName = tenantAndSuiteName.substring(0, i).trim();
     result.SuiteName = tenantAndSuiteName.substring(i + 1).trim();
     return result;
   }
-
-  public String execute_REQUEST(ConfigureAndAuth authResult)
-    throws InterruptedException, IOException {
+  public String execute_REQUEST (ConfigureAndAuth authResult) throws InterruptedException, IOException {
     System.out.println("\n-------------------execute_request\n");
     String guid = null;
-
+    /*
+    if(StringUtils.isEmpty(executeTenant.getName())) {
+      consoleOut.println("\n*** ERROR: A tenant name or ID must be specified!");
+      run.setResult(Result.FAILURE); // Fail this build step.
+    }*/
     if (StringUtils.isEmpty(request.getName())) {
-      consoleOut.println(
-        "\n*** ERROR: A CTM suite name or ID must be specified!"
-      );
+      consoleOut.println("\n*** ERROR: A CTM suite name or ID must be specified!");
       run.setResult(Result.FAILURE); // Fail this build step.
     } else {
+      //String tenantName = executeTenant.getName().trim();
+      //String suiteName = request.getName().trim();
+
       TandS tenantAndSuitePair = TenantAndSuite(request.getName().trim());
       String tenantName = tenantAndSuitePair.TenantName;
       String suiteName = tenantAndSuitePair.SuiteName;
@@ -878,42 +759,45 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
       consoleOut.println("\n    Suite: " + suiteName);
       try {
         tenant = MatchingTenantFromServer(authResult, tenantName);
-        if (tenant == null) throw new RuntimeException(
-          "Unable to find matching tenant: " + tenantName
-        );
+        //firstTenant = FirstTenantFromServer(authResult);
+        //if(firstTenant == null) throw new RuntimeException("No tenants");
+        //tenantId = firstTenant.TenantId;
+        if(tenant == null) throw new RuntimeException("Unable to find matching tenant: " + tenantName);
         tenantId = tenant.TenantId;
 
         consoleOut.println("\n   TenantId: " + tenantId);
 
         suiteId = MatchingSuiteIdentifier(suiteName, tenantId, authResult);
 
-        consoleOut.println(
-          "Invoking execution of CTM Suite '" +
-          suiteName +
-          "'(id=" +
-          suiteId +
-          ")"
-        );
-        consoleOut.println(
-          "   on Continuous Testing Manager @ " + ctmConfig.getUrl()
-        );
+        consoleOut.println("Invoking execution of CTM Suite '" + suiteName + "'(id=" + suiteId + ")");
+        consoleOut.println("   on Continuous Testing Manager @ " + ctmConfig.getUrl());
         consoleOut.println("\n");
 
         guid = authResult.Server.executeSuite(suiteId);
-        if (
-          guid == null || StringUtils.isEmpty(guid)
-        ) throw new RuntimeException(
-          "No execution identifier returned, there was a failure in CTM"
-        );
+        if(guid == null
+          || StringUtils.isEmpty(guid)) throw new RuntimeException("No execution identifier returned, there was a failure in CTM");
+
+        /*if (guid == null) {
+          CTMResult result = server.getLastCTMResult();
+          String err = result.dumpDebug();
+          if (result.getJsonData() != null) {
+            try {
+              err = result.getJsonData().getString("Message");
+            } catch (Exception ignored) {
+            }
+          }
+          consoleOut.println("\n*** ERROR: Request to execute '" + theReq + "' failed:");
+          consoleOut.printlnIndented("   ", err);
+        } */
 
         consoleOut.println("\n    CTM Execution Result Identifier: " + guid);
-      } catch (Exception ex) {
-        consoleOut.println(
-          "\n*** ERROR: (during execute suite) " + ex.getMessage()
-        );
+      }
+      catch(Exception ex) {
+        consoleOut.println("\n*** ERROR: (during execute suite) " + ex.getMessage());
         run.setResult(Result.FAILURE); // Fail this build step.
       }
     }
     return guid;
   }
-}
+
+  }

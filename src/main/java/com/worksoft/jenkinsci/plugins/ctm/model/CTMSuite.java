@@ -13,15 +13,14 @@ import net.sf.json.JSONObject;
 public class CTMSuite {
   public String SuiteId = "";
   public String SuiteName = "";
-  public String RecordCount = "";
-
+  public String RecordCount = "0";
   public WorksoftTenant Tenant = null;
 
   public CTMSuite(JSONObject jsonSuite) {
-    if (jsonSuite.containsKey("SuiteId")) {
+    if(jsonSuite.containsKey("SuiteId")) {
       this.SuiteId = jsonSuite.getString("SuiteId");
     }
-    if (jsonSuite.containsKey("SuiteName")) {
+    if(jsonSuite.containsKey("SuiteName")) {
       this.SuiteName = jsonSuite.getString("SuiteName");
     }
     if (jsonSuite.containsKey("RecordCount")) {
