@@ -150,8 +150,8 @@ publishing {
                     url System.properties['jpi.repoUrl'] ?: 'https://repo.jenkins-ci.org/releases'
                 }
                 credentials {
-                    username = "glenpgillman"
-                    password = "AP6rzzcGDpojCY69J35VGQFhpB8"
+                    //username = "notspecified"
+                    //password = "notspecified"
                 }
             }
         }
