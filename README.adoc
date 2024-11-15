@@ -199,5 +199,22 @@ execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request
 === Version 1.0.0.0
 * Initial version
 
+===== Execute Request parameter
 
+*** UI Details:
 
+-- Add Execution Parameters check box under the Additional Options in Jenkins UI for the CTM plugin
+-- Within the checkbox will be Key and Value
+-- Key is a text entry field.  For this story we are adding support for the key value of “Machine Attributes”.
+-- The key value of Machine Attributes can only be used once.
+-- If the user enters an unsupported key, we do not enforce this at the UI.
+-- At runtime if there is an unsupported key, we need to make sure it is returned to Jenkins that the execution parameter key is not valid for the Jenkins logs.
+-- Key values restricted to alpha numeric and 255 characters.
+-- User will enter the value.  Check for validations currently on this field.
+-- Add button to add another execution parameter with key value pair.
+-- User is able to delete the key value pair (EM example shows X to delete) - do the same thing.  Click on the X and the key value pair is deleted.
+-- Save button at the bottom to save the parameters.
+
+== Changelog
+
+=== Version 3.0.0.0
