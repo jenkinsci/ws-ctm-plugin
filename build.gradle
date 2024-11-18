@@ -87,14 +87,12 @@ jenkinsPlugin {
         }
     }
 }
-
 dependencies {
     api platform("io.jenkins.tools.bom:bom-2.440.x:${jenkinsBomVersion}")
-    implementation  'org.jenkins-ci.plugins:credentials'
-    implementation  'org.jenkins-ci.plugins:structs'
+    implementation 'org.jenkins-ci.plugins:credentials'
+    implementation 'org.jenkins-ci.plugins:structs'
     implementation 'org.jodd:jodd-http:5.0.1'
     implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    implementation 'com.github.jnr:jnr-ffi:2.2.17'
 }
 
 
@@ -105,10 +103,6 @@ idea{
         testOutputDir = compileTestJava.destinationDir
     }
 }
-
-//compileJava {
-//    options.compilerArgs << '-Xlint:deprecation'
-//}
 
 task listSrc(group: 'debugging', description: 'list project source') {
     doLast { task ->
@@ -160,9 +154,6 @@ publishing {
             }
         }
     }
-//password = "hrBcJCotgbKEEp"
-//username = project.stringProp(“jenkins.username”)
-//password = project.stringProp(“jenkins.password”)
 
 tasks.named('server').configure {
     execSpec {
