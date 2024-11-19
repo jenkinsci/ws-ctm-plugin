@@ -4,14 +4,14 @@
 
 = Worksoft Continuous Testing Manager Plugin
 
-image:https://img.shields.io/jenkins/plugin/v/ws-ctm.svg[Jenkins Plugin,link=https://plugins.jenkins.io/ws-ctm-plugin]
+image:https://img.shields.io/jenkins/plugin/v/ws-ctm.svg[Jenkins Plugin,link=https://plugins.jenkins.io/ws-ctm]
 image:https://img.shields.io/github/release/jenkinsci/worksoft-continuous-testing-manager-plugin.svg?label=changelog[link="https://github.com/jenkinsci/ws-ctm-plugin/releases/latest"]
-image:https://img.shields.io/jenkins/plugin/i/ws-ctm-plugin.svg?color=blue[Jenkins Plugin Installs,link=https://plugins.jenkins.io/ws-ctm-plugin]
+image:https://img.shields.io/jenkins/plugin/i/ws-ctm-plugin.svg?color=blue[Jenkins Plugin Installs,link=https://plugins.jenkins.io/ws-ctm]
 
 [width="100%",cols="100%",options="header",]
 |===
 |*Plugin Information*
-|View Worksoft Continuous Testing Manager https://plugins.jenkins.io/ws-ctm-plugin [on the plugin site] for more information.
+|View Worksoft Continuous Testing Manager https://plugins.jenkins.io/ws-ctm [on the plugin site] for more information.
 |===
 
 == Description
@@ -34,7 +34,7 @@ image::plugin_install.png[Plugin Installation,{thumbnail}]
 
 === Manual Install
 
-. Download *ws-ctm-plugin.hpi* from https://plugins.jenkins.io/ws-ctm-plugin
+. Download *ws-ctm-plugin.hpi* from https://plugins.jenkins.io/ws-ctm
 . Open Jenkins in a browser (e.g. `\http://<jenkins-host>:8080`)
 . Navigate to *Manage Jenkins* -> *Manage Plugins* and select the *Advanced* tab.
 . Click the **Choose File** button in the *Upload Plugin* section.
