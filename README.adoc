@@ -85,7 +85,37 @@ Both the polling interval and maximum run time must be specified in seconds:
 
 image::image22.png[Wait Times,{thumbnail}]
 
-=== Output
+=== Sample Request 
+
+ [source,json]
+
+{
+   "SuiteId":"199641ed-73dd-4eef-51bf-08dce6cbbec6",
+   "SuiteName":"Certify_Plug-In_Suite",
+   "TenantId":"83811d0b-a121-473f-742c-08dca5a0ca7b",
+   "TenantName":"smoketest_abhijeet",
+   "Processes":
+      [
+         {
+            "ProcessId":"62",
+            "ProcessPath":"",
+            "Layout":"",
+            "Recordset":"",
+            "RecordsetMode":"",
+            "MachineAttributes":"Host Name=TitanTriage03;IPv4=10.0.84.101"
+         },
+         {
+            "ProcessId":"64",
+            "ProcessPath":"",
+            "Layout":"",
+            "Recordset":"",
+            "RecordsetMode":"",
+            "MachineAttributes":"Host Name=TitanTriage03;IPv4=10.0.84.101"
+         }
+      ]
+   }
+
+=== Sample Response
 
 This plugin outputs the Worksoft Continuous Testing Manager result set in JSON format to a file named - *execMan-result.json* - in the associated Jenkins job's workspace directory.
 For example:
@@ -146,6 +176,7 @@ For example:
       }
    ]
 }
+
 ----
 
 NOTE: See Certify Continuous Testing Manager's API specification for a complete description of the result set.
@@ -184,6 +215,17 @@ Both the polling interval and maximum run time must be specified in seconds
     `maxRunTime`:::
     Type: String::::
 --
+'Execution Parameter' (optional) :: Optional execution parameter. 
+   Required Parameters:::
+     `key`:::
+      Type: String::::
+
+      `value`:::
+      Type: String::::
+
+Example:- We can add n number of execution parameters in key/value pair like ProcessId:62 (This shoould be process Id), MachineAttribute:Host Name=TitanTriage02;IPv4=10.0.84.75. 
+
+Screenshot::
 
 
 ==== Example pipeline snippets
@@ -196,7 +238,7 @@ execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request
 
 == Changelog
 
-=== Version 1.0.0.0
+=== Version 3.0.0.0
 * Initial version
 
 
