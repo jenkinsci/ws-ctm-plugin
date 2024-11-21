@@ -201,6 +201,25 @@ execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request
 
 ===== Execute Request parameter
 
+*** UI Details:
+
+-- Added Execution Parameters check box under WaitConfig in CTM plugin
+-- Within this checkbox key/value pair will present.
+-- Key/value is an text entry field.
+-- Key values restricted to alpha numeric and 255 characters.
+-- TO enter multipple key/value pair we have provided Add button to add another key value pair.
+-- User is able to delete the key value pair by clicking on the X and the key value pair is deleted.
+-- Save button at the bottom to save the parameters.
+
+   `key`:::
+    Type: String::::
+
+    `value`:::
+    Type: String::::
+    
+image::image23.png[Execution Parameters,{thumbnail}]
+
+
 [source,json]
 
 {
@@ -268,19 +287,6 @@ execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request
    "ActiveExecutions":[],
    "CompletedExecutions":[]
 }
-
-
-*** UI Details:
-
--- Added Execution Parameters check box under WaitConfig in CTM plugin
--- Within this checkbox key/value pair will present.
--- Key/value is an text entry field.
--- Key values restricted to alpha numeric and 255 characters.
--- TO enter multipple key/value pair we have provided Add button to add another key value pair.
--- User is able to delete the key value pair by clicking on the X and the key value pair is deleted.
--- Save button at the bottom to save the parameters.
-
-image::image23.png[Execution Parameters,{thumbnail}]
 
 == Changelog
 
