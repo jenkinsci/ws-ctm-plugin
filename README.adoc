@@ -90,64 +90,6 @@ image::image22.png[Wait Times,{thumbnail}]
 This plugin outputs the Worksoft Continuous Testing Manager result set in JSON format to a file named - *execMan-result.json* - in the associated Jenkins job's workspace directory.
 For example:
 
-[source,json]
-----
-{
-   "SuiteExecutionResultId":"d19dc7c8-ce42-42a8-8d8c-08da377f4df6",
-   "SuiteId":"e270d12c-b959-43ea-be88-08da338bf4f5",
-   "SuiteExecutionResultStatusTypeId":4,
-   "Result":"Passed",
-   "ErrorMessage":null,
-   "CreatedDate":"2022-05-16T21:01:53.53+00:00",
-   "StartedDate":"2022-05-16T21:01:54.1043184+00:00",
-   "CompletedDate":"2022-05-16T21:03:29.92+00:00",
-   "AbortedDate":null,
-   "PendingExecutions":[
-
-   ],
-   "ActiveExecutions":[
-
-   ],
-   "CompletedExecutions":[
-      {
-         "CompletedExecutionId":"de841199-c50d-4dc3-70b8-08da377f875d",
-         "PendingExecutionId":"d5a7b6ba-1834-4ad7-af0c-08da377f4df9",
-         "ActiveExecutionId":"c4ad9798-d381-4646-cb7a-08da377f4e3b",
-         "MachineId":"b6392803-de2c-4a48-cbbd-08da34f69592",
-         "MachineCredentialsId":"15ed0a33-2375-4f3f-8c92-08da34f8d15a",
-         "SuiteId":"e270d12c-b959-43ea-be88-08da338bf4f5",
-         "SuiteItemId":"5469f4a0-a24b-4cec-0dd9-08da350e7a3a",
-         "SuiteExecutionResultId":"d19dc7c8-ce42-42a8-8d8c-08da377f4df6",
-         "CertifyProcessId":1,
-         "CertifyProcessName":"my process",
-         "TestsetId":null,
-         "CertifyResult":"passed",
-         "CertifyDatabaseId":"ffcd9693-b070-4a89-534a-08da350e563c",
-         "LogHeaderId":"3",
-         "CompletedExecutionResult":"",
-         "CompletedExecutionResultTypeId":1,
-         "ErrorMessage":"",
-         "CreatedDate":"2022-05-16T21:03:29.8+00:00",
-         "ExecutionCreatedDate":"2022-05-16T21:01:53.9333333+00:00",
-         "CompletedDate":"2022-05-16T21:03:29.7753219+00:00",
-         "Title":"google - May 16, 2022 16:02:34",
-         "StartTime":"2022-05-16T21:02:39+00:00",
-         "EndTime":"2022-05-16T21:03:28+00:00",
-         "ElapsedTime":"48.4020505",
-         "ProcessCount":"1",
-         "TestStepAbortCount":"0",
-         "TestStepCount":"1",
-         "TestStepFailedCount":"0",
-         "TestStepPassedCount":"1",
-         "TestStepSkippedCount":"0",
-         "ResultsFolder":"Results",
-         "StartingProcessName":"my process",
-         "RetryCount":0
-      }
-   ]
-}
-----
-
 NOTE: See Certify Continuous Testing Manager's API specification for a complete description of the result set.
 
 This file can be read/processed in either a freestyle or pipeline job.
@@ -207,7 +149,7 @@ execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request
 -- Within this checkbox key/value pair will present.
 -- Key/value is an text entry field.
 -- Key values restricted to alpha numeric and 255 characters.
--- TO enter multipple key/value pair we have provided Add button to add another key value pair.
+-- TO enter multiple key/value pair we have provided Add button to add another key value pair.
 -- User is able to delete the key value pair by clicking on the X and the key value pair is deleted.
 -- Save button at the bottom to save the parameters.
 
@@ -290,4 +232,4 @@ image::image23.png[Execution Parameters,{thumbnail}]
 
 == Changelog
 
-=== Version 3.0.0.0
+=== Version 3.0.0.0 2024-Dec Added Execution Parameter Attributes
