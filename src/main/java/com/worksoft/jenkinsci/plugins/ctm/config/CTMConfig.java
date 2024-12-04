@@ -8,28 +8,30 @@
 
 package com.worksoft.jenkinsci.plugins.ctm.config;
 
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+
 import com.worksoft.jenkinsci.plugins.ctm.ExecuteRequestCTMConfig;
+
 import hudson.Extension;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
 
 @Extension
 public class CTMConfig extends GlobalConfiguration {
 
   public ExecuteRequestCTMConfig ctmConfig;
 
-  public CTMConfig () {
+  public CTMConfig() {
     load();
   }
 
-  public ExecuteRequestCTMConfig getCTMConfig () {
+  public ExecuteRequestCTMConfig getCTMConfig() {
     return ctmConfig;
   }
 
-  public void setCtmConfig (ExecuteRequestCTMConfig ctmConfig) {
+  public void setCtmConfig(ExecuteRequestCTMConfig ctmConfig) {
     this.ctmConfig = ctmConfig;
   }
 
@@ -40,16 +42,21 @@ public class CTMConfig extends GlobalConfiguration {
    *
    * @return true if config is valid, false otherwise
    */
-  public FormValidation doValidate (@QueryParameter ExecuteRequestCTMConfig altConfig) {
-      return FormValidation.ok("Success");
+  public FormValidation doValidate(@QueryParameter ExecuteRequestCTMConfig altConfig) {
+    return FormValidation.ok("Success");
   }
 
-  // when an administrator clicks on save - this is what will persist the url and credentials
+  // when an administrator clicks on save - this is what will persist the url and
+  // credentials
   @Override
-  public boolean configure (StaplerRequest req, JSONObject json) throws FormException {
+  public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
 
     req.bindJSON(this, json.getJSONObject("ctm"));
     save();
     return true;
+  }
+
+  public String ver() {
+    return getPlugin().getVersion();
   }
 }
