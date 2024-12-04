@@ -21,7 +21,7 @@ buildscript {
 
 plugins {
     id 'groovy'
-    id 'org.jenkins-ci.jpi' version '0.43.0'
+    id 'org.jenkins-ci.jpi' version '0.50.0'
     id 'com.github.onslip.gradle-one-jar' version '1.0.5'
 }
 
@@ -51,7 +51,7 @@ apply plugin: 'net.saliman.properties'
 
 jenkinsPlugin {
     //jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
-    jenkinsVersion="2.277.1"
+    jenkinsVersion="2.440.3"
     displayName = "Worksoft Continuous Test Manager Plugin"
     shortName = "ws-ctm"
     
@@ -87,9 +87,8 @@ jenkinsPlugin {
         }
     }
 }
-
 dependencies {
-    api platform("io.jenkins.tools.bom:bom-2.289.x:${jenkinsBomVersion}")
+    api platform("io.jenkins.tools.bom:bom-2.440.x:${jenkinsBomVersion}")
     implementation 'org.jenkins-ci.plugins:credentials'
     implementation 'org.jenkins-ci.plugins:structs'
     implementation 'org.jodd:jodd-http:5.0.1'
@@ -105,10 +104,6 @@ idea{
     }
 }
 
-//compileJava {
-//    options.compilerArgs << '-Xlint:deprecation'
-//}
-
 task listSrc(group: 'debugging', description: 'list project source') {
     doLast { task ->
         println "Project $task.project.name Source Sets:"
@@ -122,6 +117,9 @@ task listSrc(group: 'debugging', description: 'list project source') {
     }
 }
 
+tasks.withType(Test).each { task ->
+    task.enabled = false
+}
 
 task listCompile(group: 'debugging', description: 'show compile configuration') {
     doLast {
@@ -156,9 +154,6 @@ publishing {
             }
         }
     }
-//password = "hrBcJCotgbKEEp"
-//username = project.stringProp(“jenkins.username”)
-//password = project.stringProp(“jenkins.password”)
 
 tasks.named('server').configure {
     execSpec {

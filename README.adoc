@@ -4,14 +4,14 @@
 
 = Worksoft Continuous Testing Manager Plugin
 
-image:https://img.shields.io/jenkins/plugin/v/ws-ctm.svg[Jenkins Plugin,link=https://plugins.jenkins.io/ws-ctm-plugin]
+image:https://img.shields.io/jenkins/plugin/v/ws-ctm.svg[Jenkins Plugin,link=https://plugins.jenkins.io/ws-ctm]
 image:https://img.shields.io/github/release/jenkinsci/worksoft-continuous-testing-manager-plugin.svg?label=changelog[link="https://github.com/jenkinsci/ws-ctm-plugin/releases/latest"]
-image:https://img.shields.io/jenkins/plugin/i/ws-ctm-plugin.svg?color=blue[Jenkins Plugin Installs,link=https://plugins.jenkins.io/ws-ctm-plugin]
+image:https://img.shields.io/jenkins/plugin/i/ws-ctm-plugin.svg?color=blue[Jenkins Plugin Installs,link=https://plugins.jenkins.io/ws-ctm]
 
 [width="100%",cols="100%",options="header",]
 |===
 |*Plugin Information*
-|View Worksoft Continuous Testing Manager https://plugins.jenkins.io/ws-ctm-plugin [on the plugin site] for more information.
+|View Worksoft Continuous Testing Manager https://plugins.jenkins.io/ws-ctm [on the plugin site] for more information.
 |===
 
 == Description
@@ -34,7 +34,7 @@ image::plugin_install.png[Plugin Installation,{thumbnail}]
 
 === Manual Install
 
-. Download *ws-ctm-plugin.hpi* from https://plugins.jenkins.io/ws-ctm-plugin
+. Download *ws-ctm-plugin.hpi* from https://plugins.jenkins.io/ws-ctm
 . Open Jenkins in a browser (e.g. `\http://<jenkins-host>:8080`)
 . Navigate to *Manage Jenkins* -> *Manage Plugins* and select the *Advanced* tab.
 . Click the **Choose File** button in the *Upload Plugin* section.
@@ -90,64 +90,6 @@ image::image22.png[Wait Times,{thumbnail}]
 This plugin outputs the Worksoft Continuous Testing Manager result set in JSON format to a file named - *execMan-result.json* - in the associated Jenkins job's workspace directory.
 For example:
 
-[source,json]
-----
-{
-   "SuiteExecutionResultId":"d19dc7c8-ce42-42a8-8d8c-08da377f4df6",
-   "SuiteId":"e270d12c-b959-43ea-be88-08da338bf4f5",
-   "SuiteExecutionResultStatusTypeId":4,
-   "Result":"Passed",
-   "ErrorMessage":null,
-   "CreatedDate":"2022-05-16T21:01:53.53+00:00",
-   "StartedDate":"2022-05-16T21:01:54.1043184+00:00",
-   "CompletedDate":"2022-05-16T21:03:29.92+00:00",
-   "AbortedDate":null,
-   "PendingExecutions":[
-
-   ],
-   "ActiveExecutions":[
-
-   ],
-   "CompletedExecutions":[
-      {
-         "CompletedExecutionId":"de841199-c50d-4dc3-70b8-08da377f875d",
-         "PendingExecutionId":"d5a7b6ba-1834-4ad7-af0c-08da377f4df9",
-         "ActiveExecutionId":"c4ad9798-d381-4646-cb7a-08da377f4e3b",
-         "MachineId":"b6392803-de2c-4a48-cbbd-08da34f69592",
-         "MachineCredentialsId":"15ed0a33-2375-4f3f-8c92-08da34f8d15a",
-         "SuiteId":"e270d12c-b959-43ea-be88-08da338bf4f5",
-         "SuiteItemId":"5469f4a0-a24b-4cec-0dd9-08da350e7a3a",
-         "SuiteExecutionResultId":"d19dc7c8-ce42-42a8-8d8c-08da377f4df6",
-         "CertifyProcessId":1,
-         "CertifyProcessName":"my process",
-         "TestsetId":null,
-         "CertifyResult":"passed",
-         "CertifyDatabaseId":"ffcd9693-b070-4a89-534a-08da350e563c",
-         "LogHeaderId":"3",
-         "CompletedExecutionResult":"",
-         "CompletedExecutionResultTypeId":1,
-         "ErrorMessage":"",
-         "CreatedDate":"2022-05-16T21:03:29.8+00:00",
-         "ExecutionCreatedDate":"2022-05-16T21:01:53.9333333+00:00",
-         "CompletedDate":"2022-05-16T21:03:29.7753219+00:00",
-         "Title":"google - May 16, 2022 16:02:34",
-         "StartTime":"2022-05-16T21:02:39+00:00",
-         "EndTime":"2022-05-16T21:03:28+00:00",
-         "ElapsedTime":"48.4020505",
-         "ProcessCount":"1",
-         "TestStepAbortCount":"0",
-         "TestStepCount":"1",
-         "TestStepFailedCount":"0",
-         "TestStepPassedCount":"1",
-         "TestStepSkippedCount":"0",
-         "ResultsFolder":"Results",
-         "StartingProcessName":"my process",
-         "RetryCount":0
-      }
-   ]
-}
-----
-
 NOTE: See Certify Continuous Testing Manager's API specification for a complete description of the result set.
 
 This file can be read/processed in either a freestyle or pipeline job.
@@ -199,5 +141,95 @@ execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request
 === Version 1.0.0.0
 * Initial version
 
+===== Execute Request parameter
+
+*** UI Details:
+
+-- Added Execution Parameters check box under WaitConfig in CTM plugin
+-- Within this checkbox key/value pair will present.
+-- Key/value is an text entry field.
+-- Key values restricted to alpha numeric and 255 characters.
+-- TO enter multiple key/value pair we have provided Add button to add another key value pair.
+-- User is able to delete the key value pair by clicking on the X and the key value pair is deleted.
+-- Save button at the bottom to save the parameters.
+
+   `key`:::
+    Type: String::::
+
+    `value`:::
+    Type: String::::
+    
+image::image23.png[Execution Parameters,{thumbnail}]
 
 
+[source,json]
+
+{
+   "SuiteId":"199641ed-73dd-4eef-51bf-08dce6cbbec6",
+   "SuiteName":"Certify_Plug-In_Suite",
+   "TenantId":"83811d0b-a121-473f-742c-08dca5a0ca7b",
+   "TenantName":"smoketest_abhijeet",
+   "Processes":
+   [
+      {
+         "ProcessId":"62",
+         "ProcessPath":"",
+         "Layout":"",
+         "Recordset":"",
+         "RecordsetMode":"",
+         "MachineAttributes":"Host Name=TitanTriage03;IPv4=10.0.84.101"
+      },
+      {
+         "ProcessId":"64",
+         "ProcessPath":"",
+         "Layout":"",
+         "Recordset":"",
+         "RecordsetMode":"",
+         "MachineAttributes":"Host Name=TitanTriage03;IPv4=10.0.84.101"
+      }
+   ]
+}
+
+[source,json]
+
+{
+   "SuiteExecutionResultId":"6972891a-9326-4c50-4316-08dcf2746bb4",
+   "SuiteId":"199641ed-73dd-4eef-51bf-08dce6cbbec6",
+   "SuiteExecutionResultStatusTypeId":1,
+   "Result":null,
+   "ErrorMessage":null,
+   "CreatedDate":"2024-10-22T14:28:26.32+00:00",
+   "StartedDate":null,
+   "CompletedDate":null,
+   "AbortedDate":null,
+   "ScheduledDate":null,
+   "PendingExecutions":
+   [
+      {
+         "PendingExecutionId":"0c78b9e5-a880-4ecc-7071-08dcf27bde04",
+         "SuiteId":"199641ed-73dd-4eef-51bf-08dce6cbbec6",
+         "SuiteItemId":"02d3e9ed-6131-4881-e5db-08dcf2751097",
+         "SuiteExecutionResultId":"6972891a-9326-4c50-4316-08dcf2746bb4",
+         "CertifyProcessId":62,
+         "CertifyProcessName":"Passing\\IPass WithoutRS(1)",
+         "TestsetId":null,
+         "CreatedDate":"2024-10-22T14:28:26.33+00:00"
+      },
+      {
+         "PendingExecutionId":"0b451566-fd68-4acb-7072-08dcf27bde04",
+         "SuiteId":"199641ed-73dd-4eef-51bf-08dce6cbbec6",
+         "SuiteItemId":"1679be6b-10cc-4d4f-e5dc-08dcf2751097",
+         "SuiteExecutionResultId":"6972891a-9326-4c50-4316-08dcf2746bb4",
+         "CertifyProcessId":64,
+         "CertifyProcessName":"Passing\\IPass WithoutRS(2)",
+         "TestsetId":null,
+         "CreatedDate":"2024-10-22T14:28:26.32+00:00"
+      }
+   ],
+   "ActiveExecutions":[],
+   "CompletedExecutions":[]
+}
+
+== Changelog
+
+=== Version 3.0.0.0 2024-Dec Added Execution Parameter Attributes
