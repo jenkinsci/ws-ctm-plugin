@@ -21,7 +21,7 @@ buildscript {
 
 plugins {
     id 'groovy'
-    id 'org.jenkins-ci.jpi' version '0.43.0'
+    id 'org.jenkins-ci.jpi' version '0.50.0'
     id 'com.github.onslip.gradle-one-jar' version '1.0.5'
 }
 
@@ -90,10 +90,13 @@ jenkinsPlugin {
 
 dependencies {
     api platform("io.jenkins.tools.bom:bom-2.289.x:${jenkinsBomVersion}")
-    implementation 'org.jenkins-ci.plugins:credentials'
-    implementation 'org.jenkins-ci.plugins:structs'
+    compileOnly  'org.jenkins-ci.plugins:credentials'
+    compileOnly  'org.jenkins-ci.plugins:structs'
     implementation 'org.jodd:jodd-http:5.0.1'
     implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation 'org.jenkins-ci.main:maven-plugin:1.480'
+    testImplementation 'org.jenkins-ci.plugins:credentials'
+    testImplementation 'org.jenkins-ci.plugins:structs'
 }
 
 
@@ -131,8 +134,6 @@ task listCompile(group: 'debugging', description: 'show compile configuration') 
         }
     }
 }
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
 publishing {
         publications {
