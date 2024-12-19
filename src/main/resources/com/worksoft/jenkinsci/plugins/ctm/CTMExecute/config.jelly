@@ -72,7 +72,7 @@
 
                 <!--f:optionalProperty field="postExecute" title="Post Execute Action"></f:optionalProperty-->
                 <f:optionalProperty field="waitConfig" title="Wait Configuration"/>
-
+                <f:optionalProperty field="execParams" title="Execution Parameters" />
                 <j:if test="${!altEMWithRequest}">
                     <j:if test="${doAltEMAsAdvancedButton}">
                         <f:advanced title="Alternative CTM">

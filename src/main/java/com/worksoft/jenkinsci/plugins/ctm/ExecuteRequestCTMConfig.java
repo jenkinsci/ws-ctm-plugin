@@ -8,6 +8,18 @@
 
 package com.worksoft.jenkinsci.plugins.ctm;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import javax.annotation.CheckForNull;
+
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.interceptor.RequirePOST;
+
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -16,6 +28,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.worksoft.jenkinsci.plugins.ctm.model.CTMResult;
 import com.worksoft.jenkinsci.plugins.ctm.model.CTMServer;
+
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -28,16 +41,6 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jodd.util.StringUtil;
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.export.Exported;
-import org.kohsuke.stapler.interceptor.RequirePOST;
-
-import javax.annotation.CheckForNull;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 public final class ExecuteRequestCTMConfig extends AbstractDescribableImpl<ExecuteRequestCTMConfig> {
 
@@ -47,50 +50,50 @@ public final class ExecuteRequestCTMConfig extends AbstractDescribableImpl<Execu
   public String credentials;
 
   @DataBoundConstructor
-  public ExecuteRequestCTMConfig (@CheckForNull  String url, String credentials) {
+  public ExecuteRequestCTMConfig(@CheckForNull String url, String credentials) {
     this.url = url;
     System.out.println("SET ExecuteRequestCTMConfig.data bound constructor url: " + url);
     this.credentials = credentials;
   }
 
-  public String getUrl () {
+  public String getUrl() {
     System.out.println("GET ExecuteRequestCTMConfig.data bound constructor url: " + url);
     return url;
   }
 
-  public String getCredentials () {
+  public String getCredentials() {
     return credentials;
   }
 
-  public boolean isValid () {
+  public boolean isValid() {
     return StringUtil.isNotEmpty(url) && StringUtils.isNotEmpty(credentials);
   }
 
-  public StandardUsernamePasswordCredentials lookupCredentials () {
+  public StandardUsernamePasswordCredentials lookupCredentials() {
     return lookupCredentials(url, credentials);
   }
 
-  private static StandardUsernamePasswordCredentials lookupCredentials (String url, String credentialId) {
-    return StringUtils.isBlank(credentialId) ? null : CredentialsMatchers.firstOrNull(
+  @SuppressWarnings("deprecation")
+  private static StandardUsernamePasswordCredentials lookupCredentials(String url, String credentialId) {
+    return StringUtils.isBlank(credentialId) ? null
+        : CredentialsMatchers.firstOrNull(
             CredentialsProvider.lookupCredentials(
-                    StandardUsernamePasswordCredentials.class,
-                    Jenkins.getInstanceOrNull(),
-                    ACL.SYSTEM,
-                    URIRequirementBuilder.fromUri(url).build()
-            ),
+                StandardUsernamePasswordCredentials.class,
+                Jenkins.getInstanceOrNull(),
+                ACL.SYSTEM,
+                URIRequirementBuilder.fromUri(url).build()),
             CredentialsMatchers.allOf(
-                    CredentialsMatchers.withScope(CredentialsScope.GLOBAL),
-                    CredentialsMatchers.withId(credentialId)
-            ));
+                CredentialsMatchers.withScope(CredentialsScope.GLOBAL),
+                CredentialsMatchers.withId(credentialId)));
   }
 
   @Extension
   public static class DescriptorImpl extends Descriptor<ExecuteRequestCTMConfig> {
-    public String getDisplayName () {
+    public String getDisplayName() {
       return "CTM Config";
     }
 
-    public FormValidation doCheckUrl (@QueryParameter String url) {
+    public FormValidation doCheckUrl(@QueryParameter String url) {
       FormValidation ret = FormValidation.ok();
 
       try {
@@ -102,48 +105,52 @@ public final class ExecuteRequestCTMConfig extends AbstractDescribableImpl<Execu
       return ret;
     }
 
-    public FormValidation doCheckCredentials (@QueryParameter String credentials) {
+    public FormValidation doCheckCredentials(@QueryParameter String credentials) {
       FormValidation ret = FormValidation.ok();
       return ret;
     }
 
-    // this is invoked when an administrator navigates to the "Manage Jenkins" page and then selects "Configuration"
-    // retrieves the Portal URL and credentials that are saved within Jenkins for CTM
-    public ListBoxModel doFillCredentialsItems (@AncestorInPath ItemGroup context,
-                                                @QueryParameter String url,
-                                                @QueryParameter String credentialsId) {
+    // this is invoked when an administrator navigates to the "Manage Jenkins" page
+    // and then selects "Configuration"
+    // retrieves the Portal URL and credentials that are saved within Jenkins for
+    // CTM
+    @SuppressWarnings("deprecation")
+    public ListBoxModel doFillCredentialsItems(@AncestorInPath ItemGroup context,
+        @QueryParameter String url,
+        @QueryParameter String credentialsId) {
       ListBoxModel data = null;
 
       System.out.println("doFillCredentialsItems - portal url: " + url);
 
-      AccessControlled _context = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
+      AccessControlled _context = (context instanceof AccessControlled ? (AccessControlled) context
+          : Jenkins.getInstance());
       if (_context == null || !_context.hasPermission(Jenkins.ADMINISTER)) {
         data = new StandardUsernameListBoxModel().includeCurrentValue(credentialsId);
       } else {
         data = new StandardUsernameListBoxModel()
-                .includeEmptyValue()
-                .includeMatchingAs(context instanceof Queue.Task
-                                ? Tasks.getAuthenticationOf((Queue.Task) context)
-                                : ACL.SYSTEM,
-                        context,
-                        StandardUsernamePasswordCredentials.class,
-                        URIRequirementBuilder.fromUri(url).build(),
-                        CredentialsMatchers.withScope(CredentialsScope.GLOBAL))
-                .includeCurrentValue(credentialsId);
+            .includeEmptyValue()
+            .includeMatchingAs(context instanceof Queue.Task
+                ? Tasks.getAuthenticationOf((Queue.Task) context)
+                : ACL.SYSTEM,
+                context,
+                StandardUsernamePasswordCredentials.class,
+                URIRequirementBuilder.fromUri(url).build(),
+                CredentialsMatchers.withScope(CredentialsScope.GLOBAL))
+            .includeCurrentValue(credentialsId);
 
       }
       return data;
     }
 
     @RequirePOST
-    public FormValidation doTestConnection (@QueryParameter final String url, @QueryParameter final String credentials) {
-      if(!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+    @SuppressWarnings("UseSpecificCatch")
+    public FormValidation doTestConnection(@QueryParameter final String url, @QueryParameter final String credentials) {
+      if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
         return FormValidation.error("Insufficient permissions!");
       }
       if (StringUtils.isBlank(credentials)) {
         return FormValidation.error("Credentials must be selected!");
       }
-
 
       try {
         URL foo = new URL(url);
@@ -176,6 +183,10 @@ public final class ExecuteRequestCTMConfig extends AbstractDescribableImpl<Execu
       }
 
       return FormValidation.ok("Success");
+    }
+
+    public String ver() {
+      return getPlugin().getVersion();
     }
   }
 }
