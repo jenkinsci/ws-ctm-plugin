@@ -829,7 +829,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
 
       details.consoleOut.println(suiteId + ",---" + suiteName + ",---" + tenantId + ",---" + tenantName);
       for (CTMProcess processObj : processMap.values()) {
-        if (processObj.GetProcessId().isBlank() || processObj.GetProcessId().isEmpty())
+        if (processObj.GetProcessId().isEmpty())
           processIdCounter = 0;
         else
           ++processIdCounter;
