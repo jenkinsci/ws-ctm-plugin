@@ -131,8 +131,6 @@ task listCompile(group: 'debugging', description: 'show compile configuration') 
         }
     }
 }
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
 publishing {
         publications {
