@@ -1,3 +1,5 @@
+-- Abhijeet File 
+
 /*
  * Copyright (c) 2021 Worksoft, Inc.
  *
@@ -51,7 +53,7 @@ apply plugin: 'net.saliman.properties'
 
 jenkinsPlugin {
     //jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
-    jenkinsVersion="2.277.1"
+    jenkinsVersion="2.289.1"
     displayName = "Worksoft Continuous Test Manager Plugin"
     shortName = "ws-ctm"
     
@@ -94,9 +96,12 @@ dependencies {
     compileOnly  'org.jenkins-ci.plugins:structs'
     implementation 'org.jodd:jodd-http:5.0.1'
     implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testImplementation 'org.jenkins-ci.main:maven-plugin:1.480'
+	 testImplementation 'org.jenkins-ci.main:maven-plugin:1.480'
     testImplementation 'org.jenkins-ci.plugins:credentials'
     testImplementation 'org.jenkins-ci.plugins:structs'
+															   
+														   
+													   
 }
 
 
@@ -124,7 +129,6 @@ task listSrc(group: 'debugging', description: 'list project source') {
         }
     }
 }
-
 
 task listCompile(group: 'debugging', description: 'show compile configuration') {
     doLast {
