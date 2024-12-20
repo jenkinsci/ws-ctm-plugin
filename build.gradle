@@ -51,7 +51,7 @@ apply plugin: 'net.saliman.properties'
 
 jenkinsPlugin {
     //jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
-    jenkinsVersion="2.440.1"
+    jenkinsVersion="2.440.3"
     displayName = "Worksoft Continuous Test Manager Plugin"
     shortName = "ws-ctm"
     
@@ -133,9 +133,6 @@ task listCompile(group: 'debugging', description: 'show compile configuration') 
         }
     }
 }
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 publishing {
         publications {
             maven(MavenPublication) {
