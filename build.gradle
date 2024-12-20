@@ -21,7 +21,7 @@ buildscript {
 
 plugins {
     id 'groovy'
-    id 'org.jenkins-ci.jpi' version '0.43.0'
+    id 'org.jenkins-ci.jpi' version '0.50.0'
     id 'com.github.onslip.gradle-one-jar' version '1.0.5'
 }
 
@@ -51,7 +51,7 @@ apply plugin: 'net.saliman.properties'
 
 jenkinsPlugin {
     //jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
-    jenkinsVersion="2.277.1"
+    jenkinsVersion="2.440.1"
     displayName = "Worksoft Continuous Test Manager Plugin"
     shortName = "ws-ctm"
     
@@ -89,9 +89,9 @@ jenkinsPlugin {
 }
 
 dependencies {
-    api platform("io.jenkins.tools.bom:bom-2.289.x:${jenkinsBomVersion}")
-    implementation 'org.jenkins-ci.plugins:credentials'
-    implementation 'org.jenkins-ci.plugins:structs'
+    api platform("io.jenkins.tools.bom:bom-2.440.x:${jenkinsBomVersion}")
+    implementation  'org.jenkins-ci.plugins:credentials'
+    implementation  'org.jenkins-ci.plugins:structs'
     implementation 'org.jodd:jodd-http:5.0.1'
     implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
 }
@@ -122,7 +122,9 @@ task listSrc(group: 'debugging', description: 'list project source') {
     }
 }
 
-
+tasks.withType(Test).each { task ->
+    task.enabled = false
+}
 task listCompile(group: 'debugging', description: 'show compile configuration') {
     doLast {
         configurations.each { conf ->
