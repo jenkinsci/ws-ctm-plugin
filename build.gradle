@@ -122,11 +122,12 @@ task listSrc(group: 'debugging', description: 'list project source') {
         }
     }
 }
-
+// Below code should be uncomment while building code using gradle locally. 
+/*
 tasks.withType(Test).each { task ->
     task.enabled = false
 }
-
+*/
 task listCompile(group: 'debugging', description: 'show compile configuration') {
     doLast {
         configurations.each { conf ->
