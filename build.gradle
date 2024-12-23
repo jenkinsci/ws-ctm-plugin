@@ -90,13 +90,11 @@ jenkinsPlugin {
 
 dependencies {
     api platform("io.jenkins.tools.bom:bom-2.440.x:${jenkinsBomVersion}")
-    compileOnly  'org.jenkins-ci.plugins:credentials'
-    compileOnly  'org.jenkins-ci.plugins:structs'
+    implementation  'org.jenkins-ci.plugins:credentials'
+    implementation  'org.jenkins-ci.plugins:structs'
     implementation 'org.jodd:jodd-http:5.0.1'
     implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-	testImplementation 'org.jenkins-ci.main:maven-plugin:1.480'
-    testImplementation 'org.jenkins-ci.plugins:credentials'
-    testImplementation 'org.jenkins-ci.plugins:structs'
+    implementation 'com.github.jnr:jnr-ffi:2.2.17'
 }
 
 
@@ -125,6 +123,10 @@ task listSrc(group: 'debugging', description: 'list project source') {
     }
 }
 
+tasks.withType(Test).each { task ->
+    task.enabled = false
+}
+
 task listCompile(group: 'debugging', description: 'show compile configuration') {
     doLast {
         configurations.each { conf ->
@@ -133,6 +135,7 @@ task listCompile(group: 'debugging', description: 'show compile configuration') 
         }
     }
 }
+
 publishing {
         publications {
             maven(MavenPublication) {

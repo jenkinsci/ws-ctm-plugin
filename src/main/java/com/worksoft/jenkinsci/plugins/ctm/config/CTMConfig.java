@@ -52,4 +52,8 @@ public class CTMConfig extends GlobalConfiguration {
     save();
     return true;
   }
+  public String ver()
+  {
+    return getPlugin().getVersion();
+  }
 }
