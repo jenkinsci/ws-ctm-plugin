@@ -26,31 +26,31 @@ public final class ExecuteRequestParameter extends AbstractDescribableImpl<Execu
   public String value;
 
   @DataBoundConstructor
-  public ExecuteRequestParameter (String key, String value) {
+  public ExecuteRequestParameter(String key, String value) {
     this.key = key;
     this.value = value;
   }
 
-  public static ExecuteRequestParameter[] getSomeDefaults () {
-    return new ExecuteRequestParameter[]{new ExecuteRequestParameter("valueA", "valueB")};
+  public static ExecuteRequestParameter[] getSomeDefaults() {
+    return new ExecuteRequestParameter[] { new ExecuteRequestParameter("valueA", "valueB") };
   }
 
-  public String getKey () {
+  public String getKey() {
     return key;
   }
 
-  public String getValue () {
+  public String getValue() {
     return value;
   }
 
   @Symbol("emParam")
   @Extension
   public static class DescriptorImpl extends Descriptor<ExecuteRequestParameter> {
-    public String getDisplayName () {
+    public String getDisplayName() {
       return "Execution Request Parameter";
     }
 
-    public FormValidation doCheckKey (@QueryParameter String key) {
+    public FormValidation doCheckKey(@QueryParameter String key) {
       FormValidation ret = FormValidation.ok();
       if (StringUtils.isEmpty(key)) {
         ret = FormValidation.error("A key must be specified!");
@@ -58,11 +58,17 @@ public final class ExecuteRequestParameter extends AbstractDescribableImpl<Execu
       return ret;
     }
 
-    public FormValidation doCheckValue (@QueryParameter String value) {
+    public FormValidation doCheckValue(@QueryParameter String value) {
       FormValidation ret = FormValidation.ok();
       if (StringUtils.isEmpty(value)) {
         ret = FormValidation.error("A value must be specified!");
       }
+      Integer valueLenth = value.length();
+      System.out.println("value length--->" + valueLenth);
+      if (valueLenth > 255) {
+        ret = FormValidation.error("A value must can not be greater than 255 characters");
+      }
+
       return ret;
     }
   }
