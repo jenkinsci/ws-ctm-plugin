@@ -90,8 +90,8 @@ jenkinsPlugin {
 
 dependencies {
     api platform("io.jenkins.tools.bom:bom-2.440.x:${jenkinsBomVersion}")
-    compileOnly  'org.jenkins-ci.plugins:credentials'   // This is should be change from "compileOnly" to "implementation" while building code locally
-    compileOnly  'org.jenkins-ci.plugins:structs'       // This is should be change from "compileOnly" to "implementation" while building code locally
+    implementation  'org.jenkins-ci.plugins:credentials'   // This is should be change from "compileOnly" to "implementation" while building code locally
+    implementation  'org.jenkins-ci.plugins:structs'       // This is should be change from "compileOnly" to "implementation" while building code locally
     implementation 'org.jodd:jodd-http:5.0.1'
     implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     implementation 'com.github.jnr:jnr-ffi:2.2.17'
@@ -123,11 +123,11 @@ task listSrc(group: 'debugging', description: 'list project source') {
     }
 }
 // Below code should be uncomment while building code using gradle locally. 
-/*
+
 tasks.withType(Test).each { task ->
     task.enabled = false
 }
-*/
+
 task listCompile(group: 'debugging', description: 'show compile configuration') {
     doLast {
         configurations.each { conf ->
