@@ -50,8 +50,8 @@ project.ext {
 apply plugin: 'net.saliman.properties'
 
 jenkinsPlugin {
-    //jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
-    jenkinsVersion="2.440.3"
+    jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
+    //jenkinsVersion="2.440.3"
     displayName = "Worksoft Continuous Test Manager Plugin"
     shortName = "ws-ctm"
     
@@ -80,6 +80,7 @@ jenkinsPlugin {
             email = "jenkins-maintainers@worksoft.com"
         }
     }
+
     licenses {
         license {
             name = "MIT license"
@@ -90,8 +91,8 @@ jenkinsPlugin {
 
 dependencies {
     api platform("io.jenkins.tools.bom:bom-2.440.x:${jenkinsBomVersion}")
-    implementation  'org.jenkins-ci.plugins:credentials'   // This is should be change from "compileOnly" to "implementation" while building code locally
-    implementation  'org.jenkins-ci.plugins:structs'       // This is should be change from "compileOnly" to "implementation" while building code locally
+    compileOnly  'org.jenkins-ci.plugins:credentials'   // This is should be change from "compileOnly" to "implementation" while building code locally
+    compileOnly  'org.jenkins-ci.plugins:structs'       // This is should be change from "compileOnly" to "implementation" while building code locally
     implementation 'org.jodd:jodd-http:5.0.1'
     implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     implementation 'com.github.jnr:jnr-ffi:2.2.17'
