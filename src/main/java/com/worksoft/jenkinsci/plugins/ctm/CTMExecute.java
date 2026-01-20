@@ -8,9 +8,11 @@
 
 package com.worksoft.jenkinsci.plugins.ctm;
 
+import com.thoughtworks.xstream.mapper.Mapper.Null;
+import com.worksoft.jenkinsci.plugins.ctm.CTMExecute.ConsoleStream;
+import com.worksoft.jenkinsci.plugins.ctm.CTMExecute.JobDetails;
 import com.worksoft.jenkinsci.plugins.ctm.config.CTMConfig;
 import com.worksoft.jenkinsci.plugins.ctm.model.*;
-
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -32,7 +34,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.Nonnull;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -43,8 +44,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.logging.Level;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
+import org.codehaus.groovy.tools.shell.commands.SetCommand;
+import java.util.logging.Level;
 
 public class CTMExecute extends Builder implements SimpleBuildStep {
   private static final Logger log = Logger.getLogger("jenkins.wsCTMServer.Execute");
@@ -105,7 +108,6 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
   // The following instance variables are those provided by the GUI
   private String requestType;
   private ExecuteSuite request;
-  // private ExecuteTenant executeTenant;
   private ExecuteRequestPostExecute postExecute;
   private ExecuteRequestCTMConfig altCTMConfig;
   private ExecuteWaitConfig waitConfig;
@@ -122,7 +124,6 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     // When we get here Jenkins is saving our form values, so we can invalidate
     // this session's itemsCache.
     CTMItemCache.invalidateItemsCache();
-    // TenantCache.invalidateTenantsCache();
   }
 
   public boolean getExecParameterEnabled() {
@@ -180,9 +181,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     return request;
   }
 
-  // public ExecuteTenant getExecuteTenant() {
-  // return executeTenant;
-  // }
+ 
   @DataBoundSetter
   public void setRequestType(@Nonnull String requestType) {
     System.out.println("\n----------- databound setter - requestType: " + requestType);
@@ -211,14 +210,13 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
   }
 
   @DataBoundSetter
-  @SuppressWarnings("CallToPrintStackTrace")
   public void setExecParams(ExecuteRequestParameters execParams) {
 
     try {
       this.execParams = execParams;
     } catch (Exception e) {
       e.printStackTrace();
-      log.log(Level.SEVERE, "Unable to set exec parameters {0}", e);
+      log.severe("Unable to set exec parameters " + e);
     }
   }
 
@@ -253,7 +251,6 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     return emConfig;
   }
 
-  @SuppressWarnings({ "ImplicitArrayToString", "UseSpecificCatch" })
   private static ConfigureAndAuth AuthenticateOnly(ExecuteRequestCTMConfig ctmConfig) {
     ConfigureAndAuth result = new ConfigureAndAuth();
     if (ctmConfig != null) {
@@ -310,6 +307,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     ListBoxModel items = new ListBoxModel();
 
     System.out.println("\n----------------------------------\nfillItems--------" + executeTenant);
+   
     System.out.println("\n--------------------fillItems ----------------------------\n");
 
     ConfigureAndAuth authResult = Authenticate(portalUrl, credentials);
@@ -352,27 +350,57 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     return items;
   }
 
+  // New Method to filll the items inside dropdown
+  public static ListBoxModel fillSuiteItems(String emRequestType, String executeTenant, String portalUrl, String credentials) {
+    ListBoxModel items = new ListBoxModel();
+   
+    log.log(Level.WARNING,"Inside fillSuiteItems Method...","");
+    ConfigureAndAuth authResult = Authenticate(portalUrl, credentials);
+
+    // New Code 
+    if (!authResult.Error)
+    {
+        try 
+        {
+            log.log(Level.WARNING,"Add blank entry first","");
+            items.add("-- Select a CTM Suite --"); // Add blank entry first
+
+            log.log(Level.WARNING,"Calling getSuitesForAllTenants from CTMServer class","");
+            items = authResult.Server.getSuitesForAllTenants(items);
+            
+        }
+        catch(Exception ex)
+        {
+            log.severe("Error retrieving list of suites - " + ex.getMessage());
+            items.add("*** ERROR ***", "ERROR: Couldn't retrieve Suite(s) from CTM " + ex.getMessage());
+            items.get(items.size() - 1).selected = true;
+        }
+    }
+
+    CTMItemCache.updateItemsCache("request", items);
+
+    return items;
+  }
+
   // Process the user provided parameters by substituting Jenkins environment
   // variables referenced in a parameter's value.
 
-  // private HashMap<String, String> processParameters () throws
-  // InterruptedException, IOException {
-  @SuppressWarnings("unused")
-  private HashMap<String, String> processParameters(JobDetails details) throws InterruptedException, IOException {
-    @SuppressWarnings("Convert2Diamond")
+  private List<ExecuteRequestParameter> processParameters(JobDetails details) throws InterruptedException, IOException {
     HashMap<String, String> ret = new HashMap<String, String>();
-    // EnvVars envVars = run.getEnvironment(listener);
+    ExecuteRequestParameter _executeRequestParameter = null;
+    List<ExecuteRequestParameter> _paramList = new ArrayList<>();
+
     EnvVars envVars = details.run.getEnvironment(details.listener);
     if (execParams != null && execParams.getList() != null) {
+
       for (ExecuteRequestParameter param : execParams.getList()) {
+        String key = param.getKey();
         String value = param.getValue();
-        details.consoleOut.println("Executer Parameter value--->" + value);
         if (StringUtils.isNotEmpty(param.getKey()) &&
             StringUtils.isNotEmpty(value)) {
-
           // Dereference/expand ALL Jenkins vars within the value string
           Matcher m = Pattern.compile("([^$]*)[$][{]([^}]*)[}]([^$]*)").matcher(value);
-          StringBuilder expandedValue = new StringBuilder();
+           StringBuilder expandedValue = new StringBuilder();
           boolean found = false;
           while (m.find()) {
             found = true;
@@ -390,23 +418,28 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
           if (!found) {
             expandedValue = new StringBuilder(value);
           }
+          _executeRequestParameter = new ExecuteRequestParameter();
+          _executeRequestParameter.key = key;
+          _executeRequestParameter.value = expandedValue.toString();
+          _paramList.add(_executeRequestParameter);
           ret.put(param.getKey(), expandedValue.toString());
         }
       }
     }
-    return ret;
+   
+    return _paramList;
   }
 
-  @SuppressWarnings("ImplicitArrayToString")
   private void reportVerboseProcessInformation(ProcessAutomatedExecutionModel[] processes, JobDetails details) {
     if (processes == null
         || processes.length == 0)
       return;
 
     try {
+      String logHeaderID="";  
       // Print the run's status to the build console
       details.consoleOut.println(
-          "Name  Status                     Log Header ID      Resource                            Last Error");
+          "Name             Status              Log Header ID              Resource                            Last Error");
       details.consoleOut.println(
           "----- -------------------------- ------------------ ----------------------------------- -----------------------------------");
       for (int i = 0; i < processes.length; i++) {
@@ -416,7 +449,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
         String executionStatus = p.CertifyResult;
         String resourceName = p.MachineId;
         String lastReportedError = p.ErrorMessage;
-        String logHeaderID = p.LogHeaderId;
+        logHeaderID = p.LogHeaderId;
 
         details.consoleOut.println(name + ":");
         details.consoleOut.println(String.format("      %-26.26s %-18s %35s %s",
@@ -424,6 +457,8 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
             StringUtils.abbreviate(logHeaderID, 18),
             StringUtils.abbreviate(resourceName, 35),
             lastReportedError));
+
+            details.consoleOut.println("Log Header ID =  "+ logHeaderID);
       }
     } catch (Exception ex) {
       System.out.println(ex.getMessage());
@@ -452,7 +487,6 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     return passed;
   }
 
-  @SuppressWarnings("UseSpecificCatch")
   private void OnExecutionComplete(CTMExecutionResult lastResultInfo, boolean aborted, String automationGuid,
       JobDetails details) {
     System.out.println("\nOnExecutionComplete - " + automationGuid);
@@ -483,11 +517,11 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     // Jenkins job
     try {
       FilePath resFile = new FilePath(details.workspace.getChannel(), details.workspace + "/execMan-result.json");
-      // File resFile = new File(workspace + "/execMan-result.json");
+
       if (lastResultInfo != null
           && StringUtils.isNotEmpty(lastResultInfo.FullResponse)) {
         resFile.write(lastResultInfo.FullResponse, null);
-        // FileUtils.writeStringToFile(resFile, response.toString());
+
         details.consoleOut.println("\nResults written to " + resFile);
       }
     } catch (Exception e) {
@@ -525,7 +559,6 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     String elapsedTime = elapsedFmt.format(new Date(currentTime - startTime));
 
     // loop until complete/aborted
-    // consoleOut.println("Waiting for execution to complete...");
     details.consoleOut.println(details.run.number + ":  Waiting for execution to complete (" + guid + ")...");
     CTMExecutionResult lastResultInfo = null;
     int qtyApiFailures = 5;
@@ -608,19 +641,14 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
   // follow
   // using reflection.
   @Override
+  @SuppressWarnings("UseSpecificCatch")
   public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
       @Nonnull TaskListener listener) throws InterruptedException, IOException {
-    // Save perform parameters in instance variables for future reference.
-    // this.run = run;
-    // this.workspace = workspace;
-    // this.launcher = launcher;
-    // this.listener = listener;
-    // this.consoleOut = new ConsoleStream(listener.getLogger());
-
+   
     ConsoleStream consoleOut = new ConsoleStream(listener.getLogger());
     // Save perform parameters for future reference.
     JobDetails details = new JobDetails(run, workspace, launcher, listener, consoleOut);
-
+    
     // Delete the result file
     FileUtils.deleteQuietly(new File(workspace + "/execMan-result.json"));
 
@@ -700,7 +728,6 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     String suiteId = "";
     boolean found = false;
 
-    // HashSet<CTMSuite> suitesForTenant = authResult.Server.suites(tenantId);
     HashSet<CTMSuite> suitesForTenant = authResult.Server.suites(tenantId, suiteName);
     if (suitesForTenant == null)
       throw new RuntimeException("No response for suites for tenant: " + tenantId);
@@ -719,18 +746,27 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
     return suiteId;
   }
 
-  private TandS TenantAndSuite(String tenantAndSuiteName) {
+  private TandS TenantAndSuite(String tenantAndSuiteName,JobDetails details) throws InterruptedException {
+    details.consoleOut.println("Inside TenantAndSuite Method...");
+    details.consoleOut.println("tenant And SuiteName ==> " +  tenantAndSuiteName);
     if (!tenantAndSuiteName.contains("/"))
+    {
+      details.consoleOut.println("Condition ---> " + tenantAndSuiteName.contains("/"));
+      details.consoleOut.println("Inside If Block");  
       throw new RuntimeException("Expected delimiter of '/' for tenant and suite");
+    }
     int i = tenantAndSuiteName.indexOf("/");
     TandS result = new TandS();
     result.TenantName = tenantAndSuiteName.substring(0, i).trim();
     result.SuiteName = tenantAndSuiteName.substring(i + 1).trim();
+     details.consoleOut.println("Suite Name -> " +  result.SuiteName + " | " + "Tenant Name -> " +  result.TenantName);
     return result;
   }
 
   public String execute_REQUEST(ConfigureAndAuth authResult, JobDetails details)
       throws InterruptedException, IOException {
+    details.consoleOut.println("\n---Wait for 10 seconds---\n");
+    Thread.sleep(10000);
     System.out.println("\n-------------------execute_request\n");
     String guid = null;
 
@@ -738,8 +774,9 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
       details.consoleOut.println("\n*** ERROR: A CTM suite name or ID must be specified!");
       details.run.setResult(Result.FAILURE); // Fail this build step.
     } else {
-
-      TandS tenantAndSuitePair = TenantAndSuite(request.getName().trim());
+      details.consoleOut.println("Inside else block...");
+      details.consoleOut.println("result ==> " +  request.getName());
+      TandS tenantAndSuitePair = TenantAndSuite(request.getName().trim(),details);
       String tenantName = tenantAndSuitePair.TenantName;
       String suiteName = tenantAndSuitePair.SuiteName;
 
@@ -776,7 +813,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
           throw new RuntimeException("No execution identifier returned, there was a failure in CTM");
 
         details.consoleOut.println("\n    CTM Execution Result Identifier: " + guid);
-      } catch (Exception ex) {
+      } catch (RuntimeException ex) {
         details.consoleOut.println("\n*** ERROR: (during execute suite) " + ex.getMessage());
         details.run.setResult(Result.FAILURE); // Fail this build step.
       }
@@ -787,14 +824,94 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
   public String execute_RequestParamter(ConfigureAndAuth authResult, JobDetails details,
       String tenantId, String tenantName, String suiteId, String suiteName) {
     String guidId = null;
-    try {
-      List<ExecuteRequestParameter> execParamsList = execParams.getList();
+    try 
+    {
+        details.consoleOut.println("Inside execute_RequestParamter Method...");
+        List<ExecuteRequestParameter> execParamsList = SanitizeExecutionParameter(authResult, details);
+        if (execParamsList == null) 
+        {
+            details.consoleOut.println("List was empty");
+            return guidId;
+        }
+
+        boolean SuiteWithSingleProcess = false;
+        String processId = "";
+        CTMProcess ctmProcess = null;
+        Integer processIdCounter = 0;
+        Map<String, CTMProcess> processMap = new HashMap<>();
+        List<Integer> originalList = new ArrayList<>();
+        details.consoleOut.println(" Result Attribute code started from here...."); 
+      
+        // Insert ProcessIds in to one list ->  Suite may have one process or multiple process  
+        for (ExecuteRequestParameter executeRequestParameter : execParamsList)
+        {
+            if (executeRequestParameter.key.equals("ProcessId")) 
+            {
+                originalList.add(Integer.parseInt(executeRequestParameter.value));
+            }
+        }
+
+        // Get count of Original list
+        int duplicateCount = originalList.size();
+
+        // Create a HashSet from the original list
+        Set<Integer> distinctSet = new HashSet<>(originalList);
+
+        // Convert the Set back to a List if needed
+        // Remove duplicate process ids if list was having
+        List<Integer> distinctList = new ArrayList<>(distinctSet);
+        
+        int distinctCount = distinctList.size();
+
+        /*
+        --> If suite was having one process then call "ProcessResultAttributeSingleSuiteProcess" this method. This method will handle one process with multiple result attributes
+             It means we are using here Map<String,String> attributeMap = new HashMap(); 
+
+        --> If suite was having more than one process then call "ProcessResultAttributeWithMultipleSuiteProcess" this method. This method will handle multiple process with multiple result attributes
+            // It means we are using here Map<String,Map<String,String>> resultAttributeMap = new HashMap();
+        
+        NOTE: Below code (968 - 1086) and above code (Line 911 - 929) should be replace "Map<String, List<Map<String,String>>>" -- So in that way code can be easily readable and maintainable    
+        */    
+        if (distinctCount > 1) 
+        {
+            // This method will call when suite was having multiple process and multiple results attribute
+	        processMap = ProcessResultAttributeWithMultipleSuiteProcess(execParamsList,details);
+        }
+        else
+        {
+            // This method will call when suite was having single process and multiple results attribute
+            SuiteWithSingleProcess = true;
+            processMap = ProcessResultAttributeSingleSuiteProcess(execParamsList,details);
+        }
+
+      details.consoleOut.println(suiteId + ",---" + suiteName + ",---" + tenantId + ",---" + tenantName);
+      for (CTMProcess processObj : processMap.values()) {
+        if (processObj.GetProcessId().isBlank() || processObj.GetProcessId().isEmpty()) {
+          processIdCounter = 0;
+          details.consoleOut.println("Layout-->" + processObj.GetLayout());
+        } else {
+          ++processIdCounter;
+        }
+      }
+      guidId = authResult.Server.executeSuite(suiteId, suiteName, tenantId, tenantName, processMap, details,
+          processIdCounter,SuiteWithSingleProcess);
+    } catch (IOException | InterruptedException ex) {
+      details.consoleOut.println("\n*** ERROR: (during execute suite with execution parameter) " + ex.getMessage());
+      details.run.setResult(Result.FAILURE);
+    }
+    return guidId;
+  }
+
+  public  Map<String, CTMProcess> ProcessResultAttributeWithMultipleSuiteProcess(List<ExecuteRequestParameter> execParamsList,JobDetails details)
+  {
+      details.consoleOut.println("Inside ProcessResultAttributeWithMultipleSuiteProcess...");
       String processId = "";
       CTMProcess ctmProcess = null;
       Integer processIdCounter = 0;
       Map<String, CTMProcess> processMap = new HashMap<>();
 
-      for (ExecuteRequestParameter executeRequestParameter : execParamsList) {
+      for (ExecuteRequestParameter executeRequestParameter : execParamsList) 
+      {
         if (executeRequestParameter.key.equals("ProcessId")) {
           processId = executeRequestParameter.value;
         }
@@ -804,7 +921,7 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
           ctmProcess = new CTMProcess();
         }
         switch (executeRequestParameter.key) {
-          case "ProcessId":
+           case "ProcessId":
             processId = executeRequestParameter.value;
             ctmProcess.SetProcessId(executeRequestParameter.value);
             processMap.put(processId, ctmProcess);
@@ -824,22 +941,132 @@ public class CTMExecute extends Builder implements SimpleBuildStep {
           case "MachineAttributes":
             ctmProcess.SetMachineAttributes(executeRequestParameter.value);
             break;
+          default: 
+            {
+                // After MachineAttibutes any attribute would be added then it will be considered as ResultAttribute (Source CSTR-1887)
+                try
+                {
+                    if(!(executeRequestParameter.key.equals("") || executeRequestParameter.value.equals("")))
+                    {
+                        ctmProcess.SetAttributeName(executeRequestParameter.key);       // Setter method for Attribute Map
+                        ctmProcess.SetAttributeValue(executeRequestParameter.value);
+                         details.consoleOut.println("Attribute Name - " + ctmProcess.GetAttributeName() + " | " + 
+                        "Attribute Value - " + ctmProcess.GetAttributeValue());
+                        ctmProcess.AddResultAttributes(ctmProcess.GetProcessId(),ctmProcess.GetAttributeName(),ctmProcess.GetAttributeValue(),details);
+                        //passing Process Id,"key" and "value" pair to the attributeMap so it will maintain many to many relationship 
+                    }
+                    else
+                    {
+                        details.consoleOut.println("Inside Else Statement");
+                        continue;
+                    }
+                }
+                catch(Exception ex)
+                {
+                    details.consoleOut.println("ERROR :- " + ex);
+                }
+            }
         }
       }
 
-      details.consoleOut.println(suiteId + ",---" + suiteName + ",---" + tenantId + ",---" + tenantName);
-      for (CTMProcess processObj : processMap.values()) {
-        if (processObj.GetProcessId().isBlank() || processObj.GetProcessId().isEmpty())
-          processIdCounter = 0;
-        else
-          ++processIdCounter;
+      return processMap;
+  }
+  public  Map<String, CTMProcess> ProcessResultAttributeSingleSuiteProcess(List<ExecuteRequestParameter> execParamsList,JobDetails details)
+  {
+      details.consoleOut.println("Inside ProcessResultAttributeSingleSuiteProcess...");
+      String processId = "";
+      CTMProcess ctmProcess = null;
+      Integer processIdCounter = 0;
+      Map<String, CTMProcess> processMap = new HashMap<>();
+      Map<String, String> attributeMap = new HashMap<>();
+
+      for (ExecuteRequestParameter executeRequestParameter : execParamsList) 
+      {
+        if (executeRequestParameter.key.equals("ProcessId")) {
+          processId = executeRequestParameter.value;
+        }
+        if (processId != null && !processMap.isEmpty() && processMap.containsKey(processId)) {
+          ctmProcess = processMap.get(processId);
+        } else {
+          ctmProcess = new CTMProcess();
+        }
+        switch (executeRequestParameter.key) {
+          case "ProcessId" -> {
+            processId = executeRequestParameter.value;
+            ctmProcess.SetProcessId(executeRequestParameter.value);
+            processMap.put(processId, ctmProcess);
+          }
+          case "ProcessPath" -> ctmProcess.SetProcessPath(executeRequestParameter.value);
+          case "Layout" -> ctmProcess.SetLayout(executeRequestParameter.value);
+          case "Recordset" -> ctmProcess.SetRecordset(executeRequestParameter.value);
+          case "RecordsetMode" -> ctmProcess.SetRecordsetMode(executeRequestParameter.value);
+          case "MachineAttributes" -> ctmProcess.SetMachineAttributes(executeRequestParameter.value);
+          default -> 
+            {
+                  // After MachineAttibutes any attribute would be added then it will be considered as ResultAttribute (Source CSTR-1887)
+                try
+                {
+                    if(!(executeRequestParameter.key.equals("") || executeRequestParameter.value.equals("")))
+                    {
+                        details.consoleOut.println("Inside If Statement");
+                        ctmProcess.SetAttributeName(executeRequestParameter.key);
+                        ctmProcess.SetAttributeValue(executeRequestParameter.value);
+                         details.consoleOut.println("Attribute Name - " + ctmProcess.GetAttributeName() + " | " + 
+                        "Attribute Value - " + ctmProcess.GetAttributeValue());
+                        ctmProcess.AddAttributes(ctmProcess.GetAttributeName(),ctmProcess.GetAttributeValue());
+                        attributeMap.put(ctmProcess.GetAttributeName(),ctmProcess.GetAttributeValue());
+                        ctmProcess.SetAttributesMap(attributeMap);
+                         // passing "key" and "value" pair to the attributeMap so it will maintain one to many relationship 
+                    }
+                    else
+                    {
+                        details.consoleOut.println("Inside Else Statement");
+                        continue;
+                    }
+                }
+                catch(Exception ex)
+                {
+                    details.consoleOut.println("ERROR :- " + ex);
+                }
+            }
+        }
       }
-      guidId = authResult.Server.executeSuite(suiteId, suiteName, tenantId, tenantName, processMap, details,
-          processIdCounter);
-    } catch (Exception ex) {
-      details.consoleOut.println("\n*** ERROR: (during execute suite with execution parameter) " + ex.getMessage());
-      details.run.setResult(Result.FAILURE);
+
+      return processMap;
+  }
+  public List<ExecuteRequestParameter> SanitizeExecutionParameter(ConfigureAndAuth authResult, JobDetails details)
+      throws InterruptedException, IOException {
+
+    List<ExecuteRequestParameter> _paramList = new ArrayList<>();
+    ExecuteRequestParameter _executeRequestParameter = null;
+    try {
+      _paramList = processParameters(details);
+
+      for (ExecuteRequestParameter objectParam : _paramList) {
+        String sanitizedValue = authResult.Server.sanitizeParameter(objectParam.value);
+
+        String paramsKey = objectParam.key;
+        String paramsValue = objectParam.value;
+
+        details.consoleOut.println("  " + paramsKey + "  " + paramsValue);
+
+        _executeRequestParameter = new ExecuteRequestParameter();
+        if (!objectParam.value.equals(sanitizedValue)) {
+          paramsValue = sanitizedValue + " (sanitized from '" + paramsValue + "')";
+        }
+        _executeRequestParameter.key = paramsKey;
+        _executeRequestParameter.value = paramsValue;
+
+        if (_executeRequestParameter.key.equals("ProcessId"))
+          _paramList.add(0, _executeRequestParameter);
+        else
+          _paramList.add(_executeRequestParameter);
+
+      }
+    } catch (Exception e) {
+      details.consoleOut.println("ERROR--->" + e.getMessage());
     }
-    return guidId;
+
+    return _paramList;
   }
 }

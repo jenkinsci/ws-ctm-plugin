@@ -89,8 +89,8 @@ jenkinsPlugin {
 }
 dependencies {
     api platform("io.jenkins.tools.bom:bom-2.440.x:${jenkinsBomVersion}")
-    implementation 'org.jenkins-ci.plugins:credentials'
-    implementation 'org.jenkins-ci.plugins:structs'
+    implementation 'org.jenkins-ci.plugins:credentials' // This is should be change from "compileOnly" while building jenkins on github and make it to "implementation" while building code locally
+    implementation 'org.jenkins-ci.plugins:structs'     // This is should be change from "compileOnly" while building jenkins on github and make it to "implementation" while building code locally
     implementation 'org.jodd:jodd-http:5.0.1'
     implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
 }
@@ -129,8 +129,8 @@ task listCompile(group: 'debugging', description: 'show compile configuration') 
         }
     }
 }
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+//sourceCompatibility = 1.8
+//targetCompatibility = 1.8
 
 publishing {
         publications {

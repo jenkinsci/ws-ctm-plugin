@@ -8,19 +8,22 @@
 
 package com.worksoft.jenkinsci.plugins.ctm;
 
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import hudson.util.FormValidation;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
 
-import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Descriptor;
-import hudson.util.FormValidation;
-
 public final class ExecuteRequestParameter extends AbstractDescribableImpl<ExecuteRequestParameter> {
 
+public ExecuteRequestParameter()
+{
+    
+}
   @Exported
   public String key;
   @Exported
@@ -65,6 +68,7 @@ public final class ExecuteRequestParameter extends AbstractDescribableImpl<Execu
         ret = FormValidation.error("A value must be specified!");
       }
       Integer valueLenth = value.length();
+      System.out.println("value length--->" + valueLenth);
       if (valueLenth > 255) {
         ret = FormValidation.error("A value must can not be greater than 255 characters");
       }
