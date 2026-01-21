@@ -240,8 +240,9 @@ image::Certify_LogHeaderId_In_Jenkins_CTM_Plug-in_Console.png[Logheader id In Je
 
 == Changelog
 
-=== Version 5.0.0.0 Enhance Execute Request Parameter functionality by adding Certify Result Attribute (Key/Value) pair 
-    functionality
+=== Version 5.0.0.0 
+-- Enhance Execute Request Parameter functionality by adding Certify Result Attribute (Key/Value) pair 
+   functionality
 
 -- Create Result Attribute in Certify as per below:-
 
@@ -252,7 +253,7 @@ image::Result_Attribute-Recordset_Jenkins.png[Certify Result Attribute,{thumbnai
 
 -- In order to handle new enhancement (Result Attribute), Continuous Testing Manager (CTM) comes up with new API as per image
 
-image::CTM_New_API.png[CTM New API for Result Attribute,{thumbnail}]
+image::CTM_New_API.png[CTM_New_API,{request}]
 
 /api/Suite/GetAllSuitesForTenants
 
@@ -261,7 +262,7 @@ save the suite.
 
 --  login Jenkins CTM plugin and select the same suite from the dropdown and add below Execution Parameters as per below image.
 
-image::CTM_Plugin_With_Result_Attribute.png[Jenkins with Result Attribute,{thumbnail}]
+image::CTM_Plugin_With_Result_Attribute.png[Jenkins_with_Result_Attribute,{thumbnail}]
 
      --> ProcessId
      --> Layout
@@ -278,12 +279,12 @@ Result Attribute :
 
 -- Jenkins CTM plugin will display Result Attribute details in jenkins console window as per below image
    
-   image::Result_Attribute_in_Jenkins_console_window.png[Result Attribute In Jenkins Console,{thumbnail}]
+   image::Result_Attribute_in_Jenkins_console_window.png[Result_Attribute_In_Jenkins_Console,{thumbnail}]
 
 
 -- After the execution completed, user can validate Result Attrubute value in certify as per below image
    
-   image::Result_Attribute_In_Certify_Results.png[Result Attribute In Certify,{thumbnail}]
+   image::Result_Attribute_In_Certify_Results.png[Certify_Result_Attribute,{thumbnail}]
  
 
    
