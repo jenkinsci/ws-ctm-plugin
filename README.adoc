@@ -157,7 +157,7 @@ execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request
     `value`:::
     Type: String::::
     
-image::images/image23.png[Execution Parameters]
+image::image23.png[Execution Parameters,{thumbnail}]
 
 
 [source,json]
@@ -233,7 +233,7 @@ image::images/image23.png[Execution Parameters]
 === Version 4.0.0.0 
  
 After certify finishes execution for process display LogHeaderId in Jenkins CTM plugin console window.
-image::image/image26.png[Logheader Id]
+image::image26.png[Logheader Id,{thumbnail}]
 
 
 == Changelog
@@ -243,25 +243,25 @@ image::image/image26.png[Logheader Id]
    functionality
 
    2. Create Result Attribute in Certify as per below:-
-   image::image/Result_Attribute-Recordset_Jenkins[Certify Result Attribute]
+   image::Result_Attribute-Recordset_Jenkins[Certify Result Attribute,{thumbnail}]
 
    3. Add Result Attribute in the process so it will be available in certify result after the execution CompletedDate 
    as per below image
 
-   image::image/Result_Attribute-Recordset_Jenkins.png[Certify Result Attribute,{thumbnail}]
+   image::Process_With_Result_Attribute-Recordset_Jenkins.png[Certify Result Attribute,{thumbnail}]
 
    4. In order to handle new enhancement (Result Attribute), Continuous Testing Manager (CTM) comes up with new API as per image
 
    /api/Suite/GetAllSuitesForTenants
 
-   image::images/CTM_New_API.png[CTM New API]
+   image::images/CTM_New_API.png[CTM New API,{thumbnail}]
 
    5. Create Suite in Continuous Testing Manager (CTM) by selecting same process for which result attribute was added and 
       save the suite.
 
    6. Login Jenkins CTM plugin and select the same suite from the dropdown and add below Execution Parameters as per below image.
 
-   image::CTM_Plugin_With_Result_Attribute.png[Jenkins_with_Result_Attribute,{thumbnail}]
+   image::CTM_Plugin_With_Result_Attribute.png[Jenkins with Result Attribute,{thumbnail}]
 
      a. ProcessId
      b. Layout
@@ -278,11 +278,11 @@ image::image/image26.png[Logheader Id]
 
    8. Jenkins CTM plugin will display Result Attribute details in Jenkins console window:
 
-   image::images/image25.png[Result Attribute Jenkins Console]
+   image::image25.png[Result Attribute Jenkins Console,{thumbnail}]
 
    9. After execution is completed, user can validate Result Attribute value in Certify:
 
-   image::images/image24.png[Certify Result Attribute]
+   image::image24.png[Certify Result Attribute,{thumbnail}]
  
 
    
