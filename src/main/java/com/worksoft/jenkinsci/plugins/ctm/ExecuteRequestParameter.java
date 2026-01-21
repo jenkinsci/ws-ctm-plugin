@@ -20,6 +20,10 @@ import org.kohsuke.stapler.export.Exported;
 
 public final class ExecuteRequestParameter extends AbstractDescribableImpl<ExecuteRequestParameter> {
 
+public ExecuteRequestParameter()
+{
+    
+}
   @Exported
   public String key;
   @Exported

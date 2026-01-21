@@ -73,7 +73,8 @@ public final class ExecuteSuite extends AbstractDescribableImpl<ExecuteSuite> {
         return new ListBoxModel();
       }
       System.out.println("\n---------------------------------------\ndofillnameItems for suites.......");
-      return CTMExecute.fillItems("request", executeTenant, url, credentials);
+      //return CTMExecute.fillItems("request", executeTenant, url, credentials);
+       return CTMExecute.fillSuiteItems("request", executeTenant, url, credentials);
     }
   }
 }

@@ -87,7 +87,6 @@ jenkinsPlugin {
         }
     }
 }
-
 dependencies {
     api platform("io.jenkins.tools.bom:bom-2.440.x:${jenkinsBomVersion}")
     compileOnly  'org.jenkins-ci.plugins:credentials'   // This is should be change from "compileOnly" to "implementation" while building code locally
@@ -105,10 +104,6 @@ idea{
         testOutputDir = compileTestJava.destinationDir
     }
 }
-
-//compileJava {
-//    options.compilerArgs << '-Xlint:deprecation'
-//}
 
 task listSrc(group: 'debugging', description: 'list project source') {
     doLast { task ->
@@ -159,9 +154,6 @@ publishing {
             }
         }
     }
-//password = "hrBcJCotgbKEEp"
-//username = project.stringProp(“jenkins.username”)
-//password = project.stringProp(“jenkins.password”)
 
 tasks.named('server').configure {
     execSpec {
