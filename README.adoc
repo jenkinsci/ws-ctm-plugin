@@ -279,12 +279,12 @@ Result Attribute :
 
 -- Jenkins CTM plugin will display Result Attribute details in jenkins console window as per below image
    
-   image::Result_Attribute_in_Jenkins_console_window.png[Result_Attribute_In_Jenkins_Console,{thumbnail}]
+   image::image25.png[Result_Attribute_Jenkins_Console,{thumbnail}]
 
 
 -- After the execution completed, user can validate Result Attrubute value in certify as per below image
    
-   image::Result_Attribute_In_Certify_Results.png[Certify_Result_Attribute,{thumbnail}]
+   image::image24.png[Certify_Result_Attribute,{thumbnail}]
  
 
    
