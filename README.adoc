@@ -234,17 +234,19 @@ image::images/image23.png[Execution Parameters]
 
 === Version 4.0.0.0 
  
- -- After certify finishes execution for process display LogHeaderId in Jenkins CTM plugin console window.
+After certify finishes execution for process display LogHeaderId in Jenkins CTM plugin console window.
+
 image::image26.png[Logheader Id,{thumbnail}]
 
 
 == Changelog
 
 === Version 5.0.0.0 
--- Enhance Execute Request Parameter functionality by adding Certify Result Attribute (Key/Value) pair 
-   functionality
 
--- Create Result Attribute in Certify as per below image
+Enhance Execute Request Parameter functionality by adding Certify Result Attribute (Key/Value) pair 
+functionality
+
+Create Result Attribute in Certify as per below image
 
 image::Result_Attribute-Recordset_Jenkins.png[Certify Result Attribute,{thumbnail}]
 
