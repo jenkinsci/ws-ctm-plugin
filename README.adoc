@@ -266,29 +266,33 @@ save the suite.
 
 Login Jenkins CTM plugin and select the same suite from the dropdown and add below Execution Parameters
 
-User can add below execution parameters as per below. 
-   . ProcessId
-   . Layout
-   . Recordset
-   . MachineAttributes
-   . Attributes
+User can add the following execution parameters:
 
-If user wants to add multiple execution parameters for different process then he can add like below
+. ProcessId
+. Layout
+. Recordset
+. MachineAttributes
+. Attributes
 
-. Process 1-
-            . ProcessId
-            . Layout
-            . Recordset
-            . MachineAttributes
+If the user wants to add multiple execution parameters for different processes, they can define them as follows:
 
-. Process 2-
-            . ProcessId
-            . Layout
-            . Recordset
-            . Attributes
+Process 1::
 
-. Process 3-
-            . ProcessId
+* ProcessId
+* Layout
+* Recordset
+* MachineAttributes
+
+Process 2::
+
+* ProcessId
+* Layout
+* Recordset
+* Attributes
+
+Process 3::
+
+* ProcessId
 
 NOTE: While adding multiple execution parameters make sure ProcessId will be first paraemeter 
       in every new collections as per above example.
