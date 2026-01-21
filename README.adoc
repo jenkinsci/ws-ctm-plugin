@@ -250,8 +250,8 @@ Create Result Attribute in Certify as per below image
 
 image::Result_Attribute-Recordset_Jenkins.png[Certify Result Attribute,{thumbnail}]
 
--- Add Result Attribute in the process so it will be available in certify result after the execution CompletedDate 
-   as per below image
+Add Result Attribute in the process so it will be available in certify result after the execution CompletedDate 
+as per below image
 
 image::Process_With_Result_Attribute-Recordset_Jenkins.png[Result Attribute In Certify Process,{thumbnail}]
 
@@ -267,44 +267,45 @@ save the suite.
 Login Jenkins CTM plugin and select the same suite from the dropdown and add below Execution Parameters
 
 User can add below execution parameters as per below. 
-   ProcessId
-   Layout
-   Recordset
-   MachineAttributes
-   Attributes
+   . ProcessId
+   . Layout
+   . Recordset
+   . MachineAttributes
+   . Attributes
 
 If user wants to add multiple execution parameters for different process then he can add like below
 
-Process 1-
-            ProcessId
-            Layout
-            Recordset
-            MachineAttributes
+. Process 1-
+            . ProcessId
+            . Layout
+            . Recordset
+            . MachineAttributes
 
-Process 2-
-            ProcessId
-            Layout
-            Recordset
-            Attributes
+. Process 2-
+            . ProcessId
+            . Layout
+            . Recordset
+            . Attributes
 
-Process 3-
-            ProcessId
+. Process 3-
+            . ProcessId
 
 NOTE: While adding multiple execution parameters make sure ProcessId will be first paraemeter 
       in every new collections as per above example.
 
-Execution Parameter example
+Execution Parameter example:
 
 image::CTM_Plugin_With_Result_Attribute.png[Jenkins_with_Result_Attribute,{thumbnail}]
 
    
-Result Attribute :
-   a. It will be an key/value pair functionality. 
-   b. The Key name should exact match with Certify Result Attribute name.
-   c. Certify Process contains multiple Result Attributes.
-   d. While creating different Result Attributes in certify make sure name should be different.
-   e. If user used multiple Result Attribute in Certify Process then it is necessary to pass multiple Result Attributes
-      from Jenkins CTM plugin as per above image else process will fail.
+Result Attribute::
+
+. It will be a key/value pair functionality.
+. The key name should exactly match the Certify Result Attribute name.
+. Certify Process contains multiple Result Attributes.
+. While creating different Result Attributes in Certify, make sure the names are different.
+. If the user uses multiple Result Attributes in a Certify Process, it is necessary to pass multiple Result Attributes
+  from the Jenkins CTM plugin as shown in the above image; otherwise, the process will fail.
 
 Jenkins CTM plugin will display Result Attribute details in Jenkins console window:
 
