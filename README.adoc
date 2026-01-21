@@ -131,10 +131,8 @@ Both the polling interval and maximum run time must be specified in seconds
 ==== Example pipeline snippets
 
 ===== Simple CTM Suite execution:
-----
-execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request'
-----
 
+execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request'
 
 == Changelog
 
@@ -143,15 +141,15 @@ execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request
 
 ===== Execute Request parameter
 
-*** UI Details:
+* UI Details:
 
--- Added Execution Parameters check box under WaitConfig in CTM plugin
--- Within this checkbox key/value pair will present.
--- Key/value is an text entry field.
--- Key values restricted to alpha numeric and 255 characters.
--- TO enter multiple key/value pair we have provided Add button to add another key value pair.
--- User is able to delete the key value pair by clicking on the X and the key value pair is deleted.
--- Save button at the bottom to save the parameters.
+1. Added Execution Parameters check box under WaitConfig in CTM plugin
+2. Within this checkbox key/value pair will present.
+3. Key/value is an text entry field.
+4. Key values restricted to alpha numeric and 255 characters.
+5. TO enter multiple key/value pair we have provided Add button to add another key value pair.
+6. User is able to delete the key value pair by clicking on the X and the key value pair is deleted.
+7. Save button at the bottom to save the parameters.
 
    `key`:::
     Type: String::::
@@ -159,7 +157,7 @@ execMan request: [name: 'name-of-tenant / name-of-suite'], requestType: 'request
     `value`:::
     Type: String::::
     
-image::image23.png[Execution Parameters,{thumbnail}]
+image::images/image23.png[Execution Parameters]
 
 
 [source,json]
@@ -234,57 +232,57 @@ image::image23.png[Execution Parameters,{thumbnail}]
 
 === Version 4.0.0.0 
  
- -- After certify finishes execution for process display LogHeaderId in Jenkins CTM plugin console window.
-image::Certify_LogHeaderId_In_Jenkins_CTM_Plug-in_Console.png[Logheader id In Jenkins Console,{thumbnail}]
+After certify finishes execution for process display LogHeaderId in Jenkins CTM plugin console window.
+image::image/image26.png[Logheader Id]
 
 
 == Changelog
 
 === Version 5.0.0.0 
--- Enhance Execute Request Parameter functionality by adding Certify Result Attribute (Key/Value) pair 
+   1. Enhance Execute Request Parameter functionality by adding Certify Result Attribute (Key/Value) pair 
    functionality
 
--- Create Result Attribute in Certify as per below:-
+   2. Create Result Attribute in Certify as per below:-
+   image::image/Result_Attribute-Recordset_Jenkins[Certify Result Attribute]
 
--- Add Result Attribute in the process so it will be available in certify result after the execution CompletedDate 
+   3. Add Result Attribute in the process so it will be available in certify result after the execution CompletedDate 
    as per below image
 
-image::Result_Attribute-Recordset_Jenkins.png[Certify Result Attribute,{thumbnail}]
+   image::image/Result_Attribute-Recordset_Jenkins.png[Certify Result Attribute,{thumbnail}]
 
--- In order to handle new enhancement (Result Attribute), Continuous Testing Manager (CTM) comes up with new API as per image
+   4. In order to handle new enhancement (Result Attribute), Continuous Testing Manager (CTM) comes up with new API as per image
 
-image::CTM_New_API.png[CTM_New_API,{request}]
+   /api/Suite/GetAllSuitesForTenants
 
-/api/Suite/GetAllSuitesForTenants
+   image::images/CTM_New_API.png[CTM New API]
 
--- Create Suite in Continuous Testing Manager (CTM) by selecting same process for which result attribute was added and 
-save the suite.
+   5. Create Suite in Continuous Testing Manager (CTM) by selecting same process for which result attribute was added and 
+      save the suite.
 
--- Login Jenkins CTM plugin and select the same suite from the dropdown and add below Execution Parameters as per below image.
+   6. Login Jenkins CTM plugin and select the same suite from the dropdown and add below Execution Parameters as per below image.
 
-image::CTM_Plugin_With_Result_Attribute.png[Jenkins_with_Result_Attribute,{thumbnail}]
+   image::CTM_Plugin_With_Result_Attribute.png[Jenkins_with_Result_Attribute,{thumbnail}]
 
-     -- ProcessId
-     -- Layout
-     -- Recordset
-     -- Result Attribute
+     a. ProcessId
+     b. Layout
+     c. Recordset
+     d. Result Attribute
 
--- Result Attribute :
-   -- It will be an key/value pair functionality. 
-   -- The Key name should exact match with Certify Result Attribute name.
-   -- Certify Process contains multiple Result Attributes.
-   -- While creating different Result Attributes in certify make sure name should be different.
-   -- If user used multiple Result Attribute in Certify Process then it is necessary to pass multiple Result Attributes
-       from Jenkins CTM plugin as per above image else process will fail.
+   7. Result Attribute :
+         a. It will be an key/value pair functionality. 
+         b. The Key name should exact match with Certify Result Attribute name.
+         c. Certify Process contains multiple Result Attributes.
+         d. While creating different Result Attributes in certify make sure name should be different.
+         e. If user used multiple Result Attribute in Certify Process then it is necessary to pass multiple Result Attributes
+            from Jenkins CTM plugin as per above image else process will fail.
 
--- Jenkins CTM plugin will display Result Attribute details in jenkins console window as per below image
-   
-   image::image25.png[Result_Attribute_Jenkins_Console,{thumbnail}]
+   8. Jenkins CTM plugin will display Result Attribute details in Jenkins console window:
 
+   image::images/image25.png[Result Attribute Jenkins Console]
 
--- After the execution completed, user can validate Result Attrubute value in certify as per below image
-   
-   image::image24.png[Certify_Result_Attribute,{thumbnail}]
+   9. After execution is completed, user can validate Result Attribute value in Certify:
+
+   image::images/image24.png[Certify Result Attribute]
  
 
    
