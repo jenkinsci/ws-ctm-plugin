@@ -25,7 +25,6 @@ plugins {
     id 'com.github.onslip.gradle-one-jar' version '1.0.5'
 }
 
-apply plugin: 'maven-publish'
 apply plugin: 'idea'
 
 // Where to resolve external dependencies.
@@ -36,8 +35,8 @@ repositories {
     }
 }
 
-group = 'org.jenkins-ci.plugins'
-//group = 'io.jenkins.plugins'
+//group = 'org.jenkins-ci.plugins'
+group = 'io.jenkins.plugins'
 description = 'Adds build step(s) for interacting with Worksoft Continuous Test Manager.'
 
 project.ext {
@@ -53,25 +52,10 @@ jenkinsPlugin {
     //jenkinsVersion="${jenkinsBaseVersion}.${jenkinsPatchVersion}"
     jenkinsVersion="2.440.3"
     displayName = "Worksoft Continuous Test Manager Plugin"
-    shortName = "ws-ctm"
+    shortName = "worksoft-ctm"
     
     // URL for plugin on Jenkins wiki or elsewhere
     url = "https://github.com/jenkinsci/ws-ctm-plugin"
-
-    repoUrl = 'https://repo.jenkins-ci.org/releases'
-    snapshotRepoUrl = 'https://repo.jenkins-ci.org/snapshots'
-
-    // enable injection of additional tests for checking the syntax of Jelly and other things
-    disabledTestInjection = false
-
-// disable configuration of Maven Central, the local Maven cache and the Jenkins Maven repository, defaults to true
-    configureRepositories = false
-
-    // skip configuration of publications and repositories for the Maven Publishing plugin, defaults to true
-    configurePublishing = false
-
-    // plugin file extension, either 'jpi' or 'hpi', defaults to 'hpi'
-    fileExtension = 'hpi'
 
     developers {
         developer {
@@ -80,19 +64,22 @@ jenkinsPlugin {
             email = "jenkins-maintainers@worksoft.com"
         }
     }
+
     licenses {
         license {
             name = "MIT license"
-            distribution "repo"
+            distribution 'repo'
         }
     }
 }
+
 dependencies {
     api platform("io.jenkins.tools.bom:bom-2.440.x:${jenkinsBomVersion}")
-    implementation 'org.jenkins-ci.plugins:credentials'
-    implementation 'org.jenkins-ci.plugins:structs'
+    compileOnly  'org.jenkins-ci.plugins:credentials'   // This is should be change from "compileOnly" while building jenkins on github and make it to "implementation" while building code locally
+    compileOnly  'org.jenkins-ci.plugins:structs'       // This is should be change from "compileOnly" while building jenkins on github and make it to "implementation" while building code locally
     implementation 'org.jodd:jodd-http:5.0.1'
     implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    implementation 'com.github.jnr:jnr-ffi:2.2.17'
 }
 
 
@@ -103,6 +90,10 @@ idea{
         testOutputDir = compileTestJava.destinationDir
     }
 }
+
+//compileJava {
+//    options.compilerArgs << '-Xlint:deprecation'
+//}
 
 task listSrc(group: 'debugging', description: 'list project source') {
     doLast { task ->
@@ -117,6 +108,7 @@ task listSrc(group: 'debugging', description: 'list project source') {
     }
 }
 
+// Below code should be uncomment while building code using gradle locally.And comment it while building jenkins build on github report 
 tasks.withType(Test).each { task ->
     task.enabled = false
 }
@@ -129,31 +121,6 @@ task listCompile(group: 'debugging', description: 'show compile configuration') 
         }
     }
 }
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-publishing {
-        publications {
-            maven(MavenPublication) {
-                from components.java
-            }
-        }
-
-        repositories {
-            maven {
-                name 'jenkins'
-                if (project.version.toString().endsWith('-SNAPSHOT')) {
-                    url System.properties['jpi.snapshotRepoUrl'] ?: 'https://repo.jenkins-ci.org/snapshots'
-                } else {
-                    url System.properties['jpi.repoUrl'] ?: 'https://repo.jenkins-ci.org/releases'
-                }
-                credentials {
-                    //username = "notspecified"
-                    //password = "notspecified"
-                }
-            }
-        }
-    }
 
 tasks.named('server').configure {
     execSpec {

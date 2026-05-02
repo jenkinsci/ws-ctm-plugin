@@ -16,10 +16,12 @@ import org.apache.commons.lang.StringUtils;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 public class Auth {
 
+  private static final Logger log = Logger.getLogger("jenkins.wsCTMServer.Auth");
   private String _userId = "";
   private String _userName = "";
   private String _email = "";
@@ -50,10 +52,10 @@ public class Auth {
     return content;
   }
   HashSet<WorksoftTenant> Tenants() {
-    System.out.println("\n-------------------------\nAuth.Tenants");
+    log.log(Level.WARNING,"\n-------\nAuth.Tenants-------","");
     HashSet<WorksoftTenant> tenants = new HashSet<WorksoftTenant>();
     if(this._tenants != null) {
-      System.out.println("\n there are tenants");
+      log.log(Level.WARNING,"\n there are tenants...","");
       for(Map.Entry<String, String> entry : this._tenants.entrySet()) {
         WorksoftTenant t = new WorksoftTenant();
         t.TenantId = entry.getKey();
@@ -66,7 +68,7 @@ public class Auth {
           // to make it work with client-side validation
           t.TenantName = this.RemoveSlash(t.TenantName);
         }
-        System.out.println("tenant: " + t.TenantName);
+        log.log(Level.WARNING,"tenant: " + t.TenantName,"");
         tenants.add(t);
       }
     }
@@ -85,7 +87,7 @@ public class Auth {
     System.out.println("\nFirst: " + this._firstName);
 
     if(jsonUserDetails.containsKey("Tenants")) {
-      System.out.println("tenants found");
+      log.log(Level.WARNING,"tenants found","");
       JSONArray array = jsonUserDetails.getJSONArray("Tenants");
       if(array != null) {
         for(int i = 0; i < array.size(); i++) {
@@ -99,7 +101,7 @@ public class Auth {
     String tenantID = JsonValue(jsonTenant, "TenantId");
     String tenantName = JsonValue(jsonTenant, "Name");
     this._tenants.put(tenantID, tenantName);
-    System.out.println("\nTenant: " + tenantName);
+    log.log(Level.WARNING,"\nTenant: " + tenantName,"");
   }
   private String JsonValue(JSONObject json, String key) {
     String z = "";

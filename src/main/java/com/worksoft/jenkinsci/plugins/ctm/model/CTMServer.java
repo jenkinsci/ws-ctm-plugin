@@ -15,6 +15,7 @@
 
 package com.worksoft.jenkinsci.plugins.ctm.model;
 
+import hudson.util.ListBoxModel;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.worksoft.jenkinsci.plugins.ctm.CTMExecute.JobDetails;
 
@@ -28,7 +29,7 @@ import org.apache.commons.lang.StringUtils;
 import org.codehaus.groovy.runtime.StackTraceUtils;
 
 import java.io.UnsupportedEncodingException;
-
+//import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -89,8 +90,8 @@ public class CTMServer {
 
     if (result.is200()) {
 
-      System.out
-          .println("\n----------------------------\nWorksoft products registered in Portal " + result.dumpDebug());
+      log.log(Level.WARNING,
+          "\n----------------------------\nWorksoft products registered in Portal " + result.dumpDebug(), "");
 
       WorksoftProduct ctmProduct = null;
 
@@ -143,11 +144,12 @@ public class CTMServer {
     CTMResult result = sendRequest(httpRequest);
 
     if (result.is200()) {
-      System.out.println("\n----------------------------\nportal configuration " + result.dumpDebug());
+      log.log(Level.WARNING,"\n----------------------------\nportal configuration " + result.dumpDebug(),"");
 
       JSONObject data = result.getJsonData();
       if (!data.containsKey("AuthenticationUrl")) {
-        throw new RuntimeException("No authentication url registered within Worksoft Portal");
+        log.log(Level.WARNING, "ERROR-No authentication url registered within Worksoft Portal", "");
+        throw new RuntimeException("ERROR-No authentication url registered within Worksoft Portal");
       }
       this.authenticationUrl = data.getString("AuthenticationUrl");
       if (!this.authenticationUrl.endsWith("/")) {
@@ -161,27 +163,41 @@ public class CTMServer {
     boolean success = this.retrieveAuthenticationConfigurationAsRequired();
     if (!success)
       return false;
+    log.log(Level.WARNING, "Inside login method...", "");
 
     String url = this.authenticationUrl + "connect/token";
-    System.out.println("authenticate using " + url);
+
+    log.log(Level.WARNING, "Authenticate using " + url, "");
+
+    String clientId = "ws.user";
+    String grantType = "password";
+    String responseType = "id_token token";
+    String username = credentials.getUsername();
+
     HttpRequest httpRequest = HttpRequest.post(url)
         .contentType("application/x-www-form-urlencoded")
         .acceptJson()
         .header("Authorization", "OAuth2")
-        .form("client_id", "ws.user",
-            "grant_type", "password",
-            "response_type", "id_token token",
-            "username", credentials.getUsername(),
+        .form("client_id", clientId,
+            "grant_type", grantType,
+            "response_type", responseType,
+            "username", username,
             "password", credentials.getPassword().getPlainText());
+
+    log.log(Level.WARNING,
+        "OAuth Request Params -> client_id={0}, grant_type={1}, response_type={2}, username={3}",
+        new Object[] { clientId, grantType, responseType, username });
 
     CTMResult result = sendRequest(httpRequest);
 
     if (result.is200()) {
+      log.log(Level.WARNING, "login 200", "");
       auth = new Auth();
       auth.save(result.getJsonData());
-
-      System.out.println("retrieve CTM URL Configuration as required");
       this.retrieveCTMURLConfigurationAsRequired();
+    }
+    else{
+        log.log(Level.WARNING, "Login Failed {0}" + result.dumpDebug(),"");
     }
     return result.is200();
   }
@@ -194,18 +210,18 @@ public class CTMServer {
     if (!this.retrieveAuthenticationConfigurationAsRequired())
       throw new RuntimeException("failed to retrieve configurations from Portal");
 
-    System.out.println("\n---------------\nauthenticatedUserInfo");
+    log.log(Level.WARNING, "\n---------------\nauthenticatedUserInfo", "");
 
     HttpRequest httpRequest = HttpRequest.get(this.authenticationUrl + "api/user/info");
 
     CTMResult result = sendRequest(httpRequest);
 
     if (result.is200()) {
-      System.out.println("\nauthenticatedUserInfo 200");
+      log.log(Level.WARNING, "\nauthenticatedUserInfo 200", "");
 
       this.auth.acknowledgeUserDetails(result.getJsonData());
 
-      System.out.println("\n------------------\nuser info " + result.dumpDebug());
+      log.log(Level.WARNING, "\n------------------\nuser info " + result.dumpDebug(), "");
     }
     return result.is200();
   }
@@ -236,7 +252,64 @@ public class CTMServer {
     return formatter.format(dt);
   }
 
+  // New Method to retrieve all the suites for respective tenants from CTM API
+  public ListBoxModel getSuitesForAllTenants(ListBoxModel items) {
+    try {
+      log.log(Level.WARNING, "Inside getSuitesForAllTenants method", "");
+      if (this.auth == null)
+        throw new RuntimeException("Internal error - auth not set");
+
+      List<CTMTenantAndSuite> allSuites = new ArrayList<CTMTenantAndSuite>();
+
+      Date beginDt = this.TodayAddYear(-2);
+      Date endDt = this.TodayAddYear(2);
+      String begin = this.FormattedDate(beginDt);
+      String end = this.FormattedDate(endDt);
+
+      String url = this.ctmUrl + "api/Suite/GetAllSuitesForTenants?StartDate=" + begin + "&EndDate=" + end;
+
+      log.log(Level.WARNING, "URL --> " + url, "");
+      HttpRequest httpRequest = HttpRequest.get(url);
+      httpRequest.body("");
+
+      CTMResult result = sendRequest(httpRequest);
+
+      if (result.is200()) {
+        JSONObject data = result.getJsonData();
+
+        if (data == null)
+          throw new RuntimeException("CTM Suites data was null...");
+
+        JSONArray suites = data.getJSONArray("objects");
+
+        if (suites == null || suites.size() <= 0)
+          throw new RuntimeException("No CTM Suites found.");
+
+        if (suites != null) {
+          log.log(Level.WARNING, "Starting for loop iterations...", "");
+          for (int i = 0; i < suites.size(); i++) {
+            JSONObject jsonSuite = suites.getJSONObject(i);
+            CTMTenantAndSuite sItem = new CTMTenantAndSuite(jsonSuite);
+            if (sItem != null) {
+              String name = sItem.TenantName + " / " + sItem.SuiteName;
+              items.add(name, name);
+
+              // Sort items alphabetically (ascending order)
+              Collections.sort(items, Comparator.comparing(o -> o.name));
+            } else {
+              log.log(Level.WARNING, "ERROR: ", sItem);
+            }
+          }
+        }
+      }
+    } catch (Exception ex) {
+      log.log(Level.SEVERE, "ERROR: exception: {0}", ex);
+    }
+    return items;
+  }
+
   public List<CTMSuite> suitesForAllTenants() {
+    log.log(Level.WARNING, "Inside suitesForAllTenants method...", "");
     if (this.auth == null)
       throw new RuntimeException("Internal error - auth not set");
     HashSet<WorksoftTenant> tenants = this.auth.Tenants();
@@ -244,10 +317,11 @@ public class CTMServer {
         || tenants.size() <= 0)
       throw new RuntimeException("Internal error - auth.tenants not available");
 
+    log.log(Level.WARNING, "Tenant list count = " + tenants.size(), "");
     List<CTMSuite> allSuites = new ArrayList<CTMSuite>();
     for (WorksoftTenant t : tenants) {
       try {
-        HashSet<CTMSuite> suitesForTenant = suites(t.TenantId, null);
+        HashSet<CTMSuite> suitesForTenant = suites(t.TenantId);
         if (suitesForTenant != null
             && suitesForTenant.size() > 0) {
           for (CTMSuite s : suitesForTenant) {
@@ -256,7 +330,7 @@ public class CTMServer {
           allSuites.addAll(suitesForTenant);
         }
       } catch (Exception ex) {
-        System.out.println("\n----error retrieving suites for tenant: " + t.TenantId);
+        log.log(Level.WARNING, "\n----ERROR retrieving suites for tenant: " + t.TenantId, "");
       }
     }
 
@@ -277,7 +351,7 @@ public class CTMServer {
     Date endDt = this.TodayAddYear(2);
     String begin = this.FormattedDate(beginDt);
     String end = this.FormattedDate(endDt);
-
+    log.log(Level.WARNING, "Inside Suite Method with tenant id as parameter...");
     String url = this.ctmUrl +
         "api/Suite/All?tenantID=" + tenantId +
         "&StartDate=" + begin +
@@ -322,7 +396,7 @@ public class CTMServer {
     Date endDt = this.TodayAddDay(1);
     String begin = this.GetFormattedDate(beginDt, yyyyMMdd) + "T00:00:00.000Z";
     String end = this.GetFormattedDate(endDt, yyyyMMdd) + "T23:59:59.000Z";
-
+    log.log(Level.WARNING, "Inside Suite method with tenant id and suite name as parameter", "");
     suitesForTenant = getSuites(tenantId, suitename, 1, begin, end);
     if (suitesForTenant == null || suitesForTenant.size() == 0) {
       throw new RuntimeException("No CTM Suites found fot tenantId: " + tenantId);
@@ -341,7 +415,6 @@ public class CTMServer {
     return suitesForTenant;
   }
 
-  @SuppressWarnings({ "StringEquality", "LoggerStringConcat" })
   private HashSet<CTMSuite> getSuites(String tenantId, String suitename, int pageNo, String startDate, String endDate) {
     HashSet<CTMSuite> suitesForTenant = new HashSet<CTMSuite>();
     String url = this.ctmUrl + "api/Suite/All";
@@ -355,7 +428,7 @@ public class CTMServer {
           + startDate + "\",\"EndDate\":\"" + endDate + "\"}";
     }
 
-    System.out.println("\n-------------------------CTM Suites\n");
+    log.log(Level.WARNING, "\n---- CTM Suites\n ----");
     System.out.println(url);
     log.info("Get suite url: " + url + " request body:" + body);
     HttpRequest httpRequest = HttpRequest.post(url);
@@ -363,6 +436,10 @@ public class CTMServer {
     httpRequest.body(body);
 
     CTMResult result = sendRequest(httpRequest);
+
+    if (result.statusCode() == 504) {
+      System.out.println("Message ==> " + result);
+    }
 
     if (result != null && result.is200()) {
       System.out.println(result.dumpDebug());
@@ -432,6 +509,21 @@ public class CTMServer {
     return value;
   }
 
+  // Format the provided hash map into a string format acceptable to the EM API
+  /*
+   * private String formatParameters (Map<String, String> parameters)
+   * {
+   * String params = "";
+   * for (String key : parameters.keySet())
+   * {
+   * String value = parameters.get(key);
+   * 
+   * params += "{" + key + "}";
+   * params += "{" + escapeParameter(sanitizeParameter(value)) + "}";
+   * }
+   * return params;
+   * }
+   */
   public String executeSuite(String suiteId) {
 
     System.out.println("\n--------------execute suite " + suiteId);
@@ -466,9 +558,12 @@ public class CTMServer {
   }
 
   public String executeSuite(String suiteId, String suiteName, String tenantId, String tenantName,
-      Map<String, CTMProcess> processMap, JobDetails details, Integer processIdCntr) {
+      Map<String, CTMProcess> processMap, JobDetails details, Integer processIdCntr, boolean SuiteWithSingleProcess) {
+
+    String guid = null;
 
     details.consoleOut.println("\n----execute suite with execution parameters SuiteId----" + suiteId);
+
     StringBuilder requestBody = new StringBuilder();
     String requestUrl = this.ctmUrl + "api/SuiteExecution/" + suiteId + "/runtimeparameters";
 
@@ -485,48 +580,111 @@ public class CTMServer {
       }
     } else {
       for (CTMProcess ctm : processMap.values()) {
-        requestBody = requestBody.append("{\"ProcessId\":\"").append(ctm.GetProcessId()).append("\",\"ProcessPath\":\"")
-            .append(ctm.GetProcessPath())
-            .append("\",\"Layout\":\"").append(ctm.GetLayout()).append("\",\"Recordset\":\"").append(ctm.GetRecordset())
-            .append("\",\"RecordsetMode\":\"").append(ctm.GetRecordsetMode()).append("\",\"MachineAttributes\":\"")
-            .append(ctm.GetMachineAttributes().replace(':', '=')).append("\"},");
-      }
-    }
-    requestBody = requestBody.deleteCharAt(requestBody.lastIndexOf(","));
-    requestBody.append("]}");
+        int count = 0;
+        requestBody = requestBody.append("{\"ProcessId\":\"").append(ctm.GetProcessId())
+            .append("\",\"ProcessPath\":\"");
+        requestBody.append(ctm.GetProcessPath());
+        requestBody.append("\",\"Layout\":\"").append(ctm.GetLayout()).append("\",\"Recordset\":\"")
+            .append(ctm.GetRecordset());
+        requestBody.append("\",\"RecordsetMode\":\"").append(ctm.GetRecordsetMode())
+            .append("\",\"MachineAttributes\":\"");
+        requestBody.append(ctm.GetMachineAttributes().replace(':', '='));
 
-    details.consoleOut.println("Request body --->" + requestBody);
-    details.consoleOut.println("Get suite url: " + requestUrl);
+        // If Suite having one/Multiple process and one/more result attributes and user
+        // did not pass the Result Attribute then "Attribute" should not passe to API
 
-    HttpRequest execParamsRequest = HttpRequest
-        .post(this.ctmUrl + "api/SuiteExecution/" + suiteId + "/runtimeparameters");
-    execParamsRequest.contentType("application/json");
-    execParamsRequest.body(requestBody.toString());
+        // If suite was having one process and multiple result attributes and user did
+        // not passed it then count = 0
+        int singleProcessMapCount = ctm.GetAttributesMap().size();
+        details.consoleOut.println("Single Process Map Count = " + singleProcessMapCount);
 
-    String guid = null;
+        // If suite was having multiple process and multiple result attributes and user
+        // did not passed it then count = 0
+        int multiProcessMapCount = ctm.GetResultAttributesMap().size();
+        details.consoleOut.println("Multiple Process Map Count = " + multiProcessMapCount);
 
-    CTMResult result = sendRequest(execParamsRequest);
-    details.consoleOut.println("\n------execute suite-----------\n" + result.dumpDebug());
-    if (result.is200()) {
-      JSONObject json = result.getJsonData();
-      if (json.containsKey("SuiteExecutionResultId")) {
-        guid = json.getString("SuiteExecutionResultId");
-      }
-    } else {
-      String response = result.getResponseData();
-      if (response != null
-          && StringUtils.isNotEmpty(response)) {
-        details.consoleOut.println(result.dumpDebug());
-        String errorMsg;
-        if (response.contains("No machines are available for execution")) {
-          errorMsg = "No machines are available for execution";
-        } else if (response.contains("No machine credentials are available for execution.")) {
-          errorMsg = "No machine credentials are available for execution";
+        // Check final count
+        int finalAttributeMapCount = singleProcessMapCount == 0 ? multiProcessMapCount : singleProcessMapCount;
+
+        // If user did not pass the Result Attribute and only pass the ProcessId and
+        // select suite name from dropdown then "Attributes" should not passe to API
+        if (finalAttributeMapCount == 0) {
+          details.consoleOut.println("finalAttributeMapCount..." + finalAttributeMapCount);
+          requestBody.append("\",\"Attributes\":[");
+          requestBody.append("]");
+          requestBody.append("},");
         } else {
-          errorMsg = "Execute suite failure - " + response;
+          // When suite was having single process and one/more result attributes
+          if (SuiteWithSingleProcess) {
+            requestBody.append("\",\"Attributes\":[");
+            Map<String, String> resultAttributeMap = ctm.GetAttributesMap();
+            for (Map.Entry<String, String> entry : resultAttributeMap.entrySet()) {
+              String childKey = entry.getKey();
+              String childValue = entry.getValue();
+
+              requestBody.append("{\"Name\":\"");
+              requestBody.append(childKey);
+              requestBody.append("\",\"Value\":\"");
+              requestBody.append(childValue);
+              requestBody.append("\"},");
+            }
+          } else {
+            // When suite was having multiple processes and one/more result attributes
+            requestBody.append("\",\"Attributes\":[");
+            Map<String, Map<String, String>> resultAttributeMap = ctm.GetResultAttributesMap();
+            for (Map.Entry<String, Map<String, String>> outerEntry : resultAttributeMap.entrySet()) {
+              String outerKey = outerEntry.getKey();
+              Map<String, String> innerMap = outerEntry.getValue();
+
+              for (Map.Entry<String, String> innerEntry : innerMap.entrySet()) {
+                String childKey = innerEntry.getKey();
+                String childValue = innerEntry.getValue();
+
+                requestBody.append("{\"Name\":\"");
+                requestBody.append(childKey);
+                requestBody.append("\",\"Value\":\"");
+                requestBody.append(childValue);
+                requestBody.append("\"},");
+              }
+            }
+          }
+
+          requestBody = requestBody.deleteCharAt(requestBody.lastIndexOf(","));
+          requestBody.append("]");
+          requestBody.append("},");
         }
-        if (StringUtils.isNotEmpty(errorMsg)) {
-          throw new RuntimeException(errorMsg);
+      }
+
+      requestBody = requestBody.deleteCharAt(requestBody.lastIndexOf(","));
+      requestBody.append("]}");
+
+      details.consoleOut.println("Request body ---" + requestBody);
+      details.consoleOut.println("Get suite url: " + requestUrl);
+
+      HttpRequest execParamsRequest = HttpRequest
+          .post(this.ctmUrl + "api/SuiteExecution/" + suiteId + "/runtimeparameters");
+      execParamsRequest.contentType("application/json");
+      execParamsRequest.body(requestBody.toString());
+
+      CTMResult result = sendRequest(execParamsRequest);
+      details.consoleOut.println("\n------execute suite-----------\n" + result.dumpDebug());
+      if (result.is200()) {
+        JSONObject json = result.getJsonData();
+        if (json.containsKey("SuiteExecutionResultId")) {
+          guid = json.getString("SuiteExecutionResultId");
+        }
+      } else {
+        String response = result.getResponseData();
+        if (response != null
+            && StringUtils.isNotEmpty(response)) {
+          details.consoleOut.println(result.dumpDebug());
+          if (response.contains("No machines are available for execution")) {
+            throw new RuntimeException("No machines are available for execution");
+          } else if (response.contains("No machine credentials are available for execution.")) {
+            throw new RuntimeException("No machine credentials are available for execution.");
+          } else {
+            throw new RuntimeException("Execute suite failure - " + response);
+          }
         }
       }
     }
@@ -544,7 +702,7 @@ public class CTMServer {
     suiteResult.ExecutionResultId = guid;
 
     if (result.is200()) {
-      System.out.println("\n------execute status-----------\n" + result.dumpDebug());
+      log.log(Level.WARNING,"\n------execute status-----------\n" + result.dumpDebug(),"");
 
       JSONObject jsonResult = result.getJsonData();
       suiteResult = new CTMExecutionResult(jsonResult);
@@ -552,13 +710,14 @@ public class CTMServer {
     } else {
       suiteResult.ApiFailed = true;
       suiteResult.ApiFailure = result.dumpDebug();
-      System.out.println("\n-------------------");
-      System.out.println(suiteResult.ApiFailure);
+      log.log(Level.WARNING,"\n------ERROR-execute status API call failed-----------\n"+ httpRequest,"");
+      log.log(Level.WARNING,suiteResult.ApiFailure,"");
     }
 
     return suiteResult;
   }
 
+  @SuppressWarnings("unused")
   private CTMResult sendRequest(HttpRequest request) throws HttpException {
 
     CTMResult result;
@@ -572,14 +731,13 @@ public class CTMServer {
       result = lastCTMResult = new CTMResult(response);
       if (result.is200()) {
         // status = true;
-
+        System.out.println("CTM/Portal/api success ");
       } else if (result.statusCode() == 401) {
-        // status = false;
+        log.log(Level.WARNING, "CTM/Portal/api unauthorized {0}", response.toString(true));
         throw new Exception("Unauthorized");
         // payload = Unauthorized;
       } else {
-
-        log.log(Level.WARNING, "CTM/Portal/api failed {0}", response.toString(true));
+        log.log(Level.WARNING, "ERROR-CTM/Portal/api failed {0}", response.toString(true));
         // status = false;
         // if (payload != null) {
         // payload = response.statusPhrase();
@@ -587,11 +745,17 @@ public class CTMServer {
       }
 
     } catch (Exception t) {
-      result = new CTMResult(null);
-      log.log(Level.SEVERE, "ERROR: unexpected error while processing request: {0}", request);
-      log.log(Level.SEVERE, "ERROR: exception: {0}", t);
-      log.log(Level.SEVERE, "ERROR: exception: {0}", t.getMessage());
-      log.severe("ERROR: stack trace:  ");
+      if (t == null) {
+        log.log(Level.SEVERE, "ERROR: exception is null");
+        log.log(Level.SEVERE, "ERROR: Auth value is null: {0}", auth);
+        log.log(Level.SEVERE, "ERROR: unexpected error while processing request: {0}", request);
+        result = new CTMResult(null);
+      } else {
+        log.log(Level.SEVERE, "ERROR: exception: {0}", t);
+        log.log(Level.SEVERE, "ERROR: exception message: {0}", t.getMessage());
+        log.log(Level.SEVERE, "ERROR: unexpected error while processing request: {0}", request);
+      }
+
       StackTraceUtils.printSanitizedStackTrace(t.getCause());
       throw new HttpException(t);
     }
