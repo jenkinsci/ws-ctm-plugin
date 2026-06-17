@@ -8,14 +8,8 @@
 
 package com.worksoft.jenkinsci.plugins.ctm;
 
-import hudson.Extension;
-import hudson.RelativePath;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Descriptor;
-import hudson.model.Job;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
+import javax.annotation.Nonnull;
+
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -23,7 +17,13 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
-import javax.annotation.Nonnull;
+import hudson.Extension;
+import hudson.RelativePath;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 
 public final class ExecuteSuite extends AbstractDescribableImpl<ExecuteSuite> {
 
@@ -35,7 +35,7 @@ public final class ExecuteSuite extends AbstractDescribableImpl<ExecuteSuite> {
     this.name = name;
   }
 
-  public String getName () {
+  public String getName() {
     return name;
   }
 
@@ -72,8 +72,8 @@ public final class ExecuteSuite extends AbstractDescribableImpl<ExecuteSuite> {
       if(!Jenkins.get().hasPermission(Jenkins.READ)) {
         return new ListBoxModel();
       }
-      System.out.println("\n---------------------------------------\ndofillnameItems for suites.......");
-      return CTMExecute.fillItems("request", executeTenant, url, credentials);
+      //return CTMExecute.fillItems("request", executeTenant, url, credentials);
+      return CTMExecute.fillSuiteItems("request", executeTenant, url, credentials);
     }
   }
 }
