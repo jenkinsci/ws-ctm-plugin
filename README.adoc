@@ -232,9 +232,9 @@ image::image23.png[Execution Parameters,{thumbnail}]
 
 == Changelog
 
-=== Version 3.0.0.0 2024-Dec Added Execution Parameter Attributes
-=== Version 4.0.0.0 2025-May - Added LogHeader in Jenkins Console logs
-=== Version 5.0.0.0 2025-Nov - Enhance functionality of Execution Parameter Attribute by adding Result Attribute functionality
-=== Version 5.1.0.0 2026-Feb - Enhance logging in Jenkins CTM plug-in by replacing "System.Println" with "log.log"
-=== Version 5.2.0.0 2026-March - Enhance logging in Jenkins CTM plugin to capture issues that were observed in executions.
+=== Version 3.0.0.0 2024-Dec   -  Added Execution Parameter Attributes
+=== Version 4.0.0.0 2025-May   -  Added LogHeader in Jenkins Console logs
+=== Version 5.0.0.0 2025-Nov   -  Enhance functionality of Execution Parameter Attribute by adding Result Attribute functionality
+=== Version 5.1.0.0 2026-Feb   -  Enhance logging in Jenkins CTM plug-in by replacing "System.Println" with "log.log"
+=== Version 5.2.0.0 2026-March -  Enhance logging in Jenkins CTM plugin to capture issues that were observed in executions.
 
